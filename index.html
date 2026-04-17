@@ -252,8 +252,8 @@ tr.drafted .draft-btn{background:var(--red);border-color:var(--red);color:#fff}
 .team-meta{display:flex;gap:8px;align-items:center;margin-top:5px}
 .team-code{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ice-fade);letter-spacing:1.5px}
 .team-note{font-size:12px;color:var(--ice-dim);margin-top:6px;font-style:italic}
-.team-roster{padding:10px 18px}
-.team-player{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.team-roster{padding:8px 18px;max-height:420px;overflow-y:auto}
+.team-player{display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px}
 .team-player:last-child{border-bottom:none}
 .tp-left{display:flex;gap:7px;align-items:center}
 .tp-rank{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ice-fade);min-width:24px}
@@ -499,103 +499,159 @@ function getStrategy(pick, leagueSize = 10) {
     return byADP.filter(pl => !takenByOthers.has(pl.name));
   }
 
-  // Player notes
-  const NOTES = {
-    'Nathan MacKinnon':   'Best player alive on the Cup favorite. Easy R1 anchor.',
-    'Connor McDavid':     'Generational. Oilers playoff-tested, McDavid will produce regardless of seed.',
-    'Nikita Kucherov':    'TBL elite scorer — favored vs MTL R1, ECF ceiling. Pure points machine.',
-    'Cale Makar':         'Best D-man alive on COL. Cup favorite = 20+ games floor. Enormous ceiling.',
-    'Martin Necas':       'Rides the same COL run as MacKinnon. NHL.com #4, DF #5 — elite Cup-path value.',
-    'Mikko Rantanen':     'DAL SCF contender. Anchors their PP1, elite scorer.',
-    'Evan Bouchard':      'Bobby Orr-tier playoff scoring rate. EDM PP QB.',
-    'Jake Guentzel':      'TBL top wing. PP1 with Kucherov. ECF ceiling.',
-    'Andrei Vasilevskiy': '#1 goalie across all 3 sources. Vezina-level, TBL ECF run.',
-    'Jason Robertson':    'DAL SCF contender, elite winger. Great value outside top 10.',
-    'Wyatt Johnston':     'DAL C — same Cup path as Rantanen, cheaper price.',
-    'Scott Wedgewood':    'COL starter. Cup favorite wins = max goalie upside.',
-    'Rasmus Dahlin':      'BUF Atlantic champ PP D. Consistent floor.',
-    'Tage Thompson':      'BUF Atlantic champ C. Big body, big points.',
-    'Sebastian Aho':      'CAR elite C. ECF path, clean Metro bracket.',
-    'Brandon Hagel':      'TBL power forward. Two-way scorer, deep run.',
-    'Brayden Point':      'TBL C, elite playoff producer. ECF ceiling.',
-    'Andrei Svechnikov':  'CAR elite wing. ECF path guaranteed.',
-    'Seth Jarvis':        'CAR wing — plays 18+ games on the easiest Metro path.',
-    'Brock Nelson':       'COL C — same Cup run as your pick if you went COL.',
-    'Jake Oettinger':     'DAL starter on a SCF contender. Best goalie on a deep-run team.',
-    'Filip Gustavsson':   'MIN starter. Wild can reach WCF.',
-    'Darren Raddysh':     'TBL PP D — criminally underrated in deep-run scenarios.',
-    'Nazem Kadri':        'COL veteran C, Cup run depth.',
-    'Artturi Lehkonen':   'COL Cup-run wing. Playoff performer.',
-    'Valeri Nichushkin':  'COL depth — plays 20+ games if they go all the way.',
-    'Quinn Hughes':       'MIN D — added at deadline, elite PP QB on WCF contender.',
-    'Jack Eichel':        'VGK elite C, WCF ceiling.',
-    'Mitch Marner':       'VGK wing, deep-run value.',
-    'Mark Stone':         'VGK RW, WCF path.',
-    'Kirill Kaprizov':    'MIN elite winger. WCF ceiling.',
-    'Matt Boldy':         'MIN RW, deep-run depth.',
-    'Nick Suzuki':        'MTL C — TBL matchup is tough but Suzuki produces.',
-    'Cole Caufield':      'MTL LW — boom/bust but elite upside in a potential upset.',
-    'Lane Hutson':        'MTL D — elite PP QB, huge if MTL upsets TBL.',
-    'Nikolaj Ehlers':     'CAR LW — easy Metro path, undervalued.',
-    'Logan Stankoven':    'CAR C — deep run depth gem.',
-    'Alex Tuch':          'BUF wing — Atlantic champ, safe late value.',
-    'Josh Doan':          'BUF wing — underrated, BUF goes far.',
-    'Bowen Byram':        'BUF D — upside pick on Atlantic champ.',
-    'Gabriel Landeskog':  'COL LW — veteran, Cup run insurance.',
-    'Devon Toews':        'COL PP D — quiet deep-run points.',
-    'Anthony Cirelli':    'TBL two-way C — safe floor, ECF ceiling.',
-    'Pavel Dorofeyev':    'VGK LW — WCF path depth gem.',
-    'Ivan Barbashev':     'VGK LW — WCF depth.',
-    'Shea Theodore':      'VGK PP D — WCF path.',
-    'Thomas Harley':      'DAL PP D — SCF path, undervalued.',
-    'Mavrik Bourque':     'DAL RW depth — Cup run late gem.',
-    'Matt Duchene':       'DAL C depth — SCF path, late value.',
-    'Mats Zuccarello':    'MIN veteran RW — WCF depth gem.',
-    'Joel Eriksson Ek':   'MIN two-way C — WCF run floor.',
-    'Brock Faber':        'MIN D — WCF run, underrated.',
-  };
-
-  // Priority-ordered candidates for R2/R3/R4 across all contender teams.
-  // Ordered by desirability (team path + fantasy value). Engine filters to available only.
-  // Exclude same team as R1 pick from R2 (spread your risk), but allow for R3+.
   const R1_TEAM = p.team;
+  const R1_POS  = p.pos; // C, LW, RW, D, G
 
-  const allCandidates = [
-    // Tier-1 contenders first
-    'Cale Makar','Nathan MacKinnon','Martin Necas','Mikko Rantanen','Jason Robertson',
-    'Andrei Vasilevskiy','Wyatt Johnston','Jake Oettinger','Rasmus Dahlin',
-    'Tage Thompson','Jake Guentzel','Connor McDavid','Evan Bouchard','Nikita Kucherov',
-    'Brayden Point','Brandon Hagel','Sebastian Aho','Andrei Svechnikov','Seth Jarvis',
-    'Scott Wedgewood','Brock Nelson','Darren Raddysh','Nazem Kadri','Artturi Lehkonen',
-    'Nikolaj Ehlers','Logan Stankoven','Quinn Hughes','Kirill Kaprizov','Jack Eichel',
-    'Matt Boldy','Mitch Marner','Mark Stone','Filip Gustavsson',
-    'Alex Tuch','Josh Doan','Valeri Nichushkin','Bowen Byram',
-    'Gabriel Landeskog','Devon Toews','Anthony Cirelli','Thomas Harley',
-    'Pavel Dorofeyev','Ivan Barbashev','Shea Theodore','Mavrik Bourque',
-    'Matt Duchene','Mats Zuccarello','Joel Eriksson Ek','Brock Faber',
-    'Nick Suzuki','Cole Caufield','Lane Hutson',
-  ].filter(n => n !== pick); // never recommend own pick
+  // What does the roster already have/lack?
+  // Track teams already represented and positions filled as we assign picks.
+  const rosterTeams = new Set([R1_TEAM]);
+  const rosterPos   = new Set([R1_POS]);
 
-  function buildRecs(round, excludeTeams = []) {
-    const avail = availableAtRound(round);
-    const availNames = new Set(avail.map(x => x.name));
-    return allCandidates
-      .filter(n => availNames.has(n) && !excludeTeams.includes(PLAYERS.find(x=>x.name===n)?.team))
-      .slice(0, 5)
-      .map(n => ({ name: n, note: NOTES[n] || PLAYERS.find(x=>x.name===n)?.path || '' }));
+  // Player notes — context-aware, written to say WHY given what you already have
+  function noteFor(name, myRosterTeams, myRosterPos) {
+    const pl = PLAYERS.find(x => x.name === name);
+    const sameTeam = pl && myRosterTeams.has(pl.team);
+    const samePos  = pl && myRosterPos.has(pl.pos);
+
+    const BASE = {
+      'Mikko Rantanen':     'DAL SCF contender — diversifies you away from COL into the other top Cup threat',
+      'Jason Robertson':    'DAL SCF contender elite winger — COL\'s biggest rival, great hedge',
+      'Wyatt Johnston':     'DAL C — SCF path, complements COL F without duplication',
+      'Andrei Vasilevskiy': 'Best goalie in the field — you have no G yet, TBL ECF ceiling',
+      'Jake Oettinger':     'DAL starter on a SCF contender — goalie slot filled with deep-run upside',
+      'Rasmus Dahlin':      'BUF Atlantic champ D — you have no D yet, safe PP1 floor',
+      'Tage Thompson':      'BUF Atlantic champ C — spreads your C depth to a second contender',
+      'Brandon Hagel':      'TBL power forward — diversifies from COL into ECF contender',
+      'Sebastian Aho':      'CAR elite C — ECF path, easiest bracket in the East',
+      'Brayden Point':      'TBL elite C — ECF ceiling, different contender from your COL anchor',
+      'Andrei Svechnikov':  'CAR elite wing — ECF path guaranteed, clean Metro bracket',
+      'Seth Jarvis':        'CAR wing — ECF path, diversifies off COL',
+      'Jake Guentzel':      'TBL top wing — ECF path, different contender from COL',
+      'Nikita Kucherov':    'TBL elite scorer — ECF ceiling, spreads risk off COL',
+      'Scott Wedgewood':    'COL starter — same Cup run as MacKinnon, stacks your goalie slot with the favorite',
+      'Evan Bouchard':      'EDM PP D — Bobby Orr playoff scoring rate, fills your D need',
+      'Quinn Hughes':       'MIN PP D — elite D you don\'t have yet, WCF ceiling',
+      'Jack Eichel':        'VGK elite C — WCF path, different conference from your COL anchor',
+      'Mitch Marner':       'VGK wing — WCF depth, good value at this range',
+      'Mark Stone':         'VGK RW — WCF path, fills wing without doubling COL',
+      'Kirill Kaprizov':    'MIN elite LW — WCF ceiling, strong value away from COL',
+      'Matt Boldy':         'MIN RW — WCF depth, diversifies off COL',
+      'Filip Gustavsson':   'MIN starter — WCF goalie, fills G slot with deep-run upside',
+      'Brock Nelson':       'COL C — stacks your Cup run further, doubles down on COL path',
+      'Martin Necas':       'COL RW — same Cup run as MacKinnon, adds COL scoring depth',
+      'Darren Raddysh':     'TBL PP D — deep-run D you don\'t have, criminally underrated',
+      'Nikolaj Ehlers':     'CAR LW — ECF path, clean Metro draw',
+      'Logan Stankoven':    'CAR C — deep run depth, diversifies teams',
+      'Alex Tuch':          'BUF wing — Atlantic champ depth, safe floor value',
+      'Josh Doan':          'BUF wing — Atlantic champ, strong late value',
+      'Bowen Byram':        'BUF D — fills D slot, Atlantic champ path',
+      'Anthony Cirelli':    'TBL C — ECF ceiling, two-way floor you can rely on',
+      'Thomas Harley':      'DAL D — SCF path D, fills your D need on a contender',
+      'Nazem Kadri':        'COL C — doubles down on Cup run, depth C',
+      'Artturi Lehkonen':   'COL LW — same Cup path, adds wing depth',
+      'Valeri Nichushkin':  'COL RW — Cup run depth wing',
+      'Devon Toews':        'COL D — same Cup run, fills your D slot',
+    };
+
+    let note = BASE[name] || (pl ? `${pl.team} ${pl.pos} — ${pl.path}` : '');
+
+    // Append context flags
+    if (sameTeam) note += ' · stacks your ' + pl.team + ' run';
+    if (samePos && !sameTeam) note += ' · fills same pos — consider if that matters to your pool format';
+    return note;
   }
 
-  // R2: exclude R1 team to diversify (unless it's COL/TBL/DAL where stacking is the point)
-  const stackTeams = ['COL','TBL','DAL','CAR'];
-  const r2Exclude  = stackTeams.includes(R1_TEAM) ? [] : [R1_TEAM];
-  const r2 = buildRecs(2, r2Exclude);
+  // Ordered candidate list — genuinely prioritised by (team depth × position need × availability likelihood)
+  // For a COL C (MacKinnon) owner: first priority is best non-COL contender player,
+  // second priority fills gaps (D, G), third is COL stacking in later rounds.
+  // The list is ordered: best non-same-team contenders first, same-team stack later.
+  const CANDIDATES_BY_PRIORITY = {
+    // If you have COL: diversify first, stack later
+    COL: [
+      'Mikko Rantanen','Jason Robertson','Andrei Vasilevskiy','Jake Oettinger',
+      'Wyatt Johnston','Rasmus Dahlin','Tage Thompson','Brandon Hagel',
+      'Sebastian Aho','Brayden Point','Andrei Svechnikov','Jake Guentzel',
+      'Seth Jarvis','Darren Raddysh','Evan Bouchard','Quinn Hughes',
+      'Filip Gustavsson','Kirill Kaprizov','Jack Eichel','Mitch Marner',
+      'Mark Stone','Matt Boldy','Nikolaj Ehlers','Logan Stankoven',
+      'Scott Wedgewood', // COL G — good value later once contenders are taken
+      'Alex Tuch','Brock Nelson','Martin Necas','Anthony Cirelli',
+      'Thomas Harley','Nazem Kadri','Artturi Lehkonen','Valeri Nichushkin',
+      'Devon Toews','Josh Doan','Bowen Byram',
+    ],
+    // If you have TBL: avoid doubling TBL early, get COL/DAL, stack TBL later
+    TBL: [
+      'Cale Makar','Mikko Rantanen','Jason Robertson','Rasmus Dahlin',
+      'Wyatt Johnston','Jake Oettinger','Tage Thompson','Sebastian Aho',
+      'Andrei Svechnikov','Evan Bouchard','Quinn Hughes','Kirill Kaprizov',
+      'Jack Eichel','Matt Boldy','Scott Wedgewood','Martin Necas',
+      'Brayden Point','Brandon Hagel','Jake Guentzel','Darren Raddysh',
+      'Seth Jarvis','Nikolaj Ehlers','Filip Gustavsson','Mitch Marner',
+      'Alex Tuch','Brock Nelson','Thomas Harley','Anthony Cirelli',
+    ],
+    // If you have EDM: COL/TBL/DAL first, EDM stack later
+    EDM: [
+      'Cale Makar','Nikita Kucherov','Mikko Rantanen','Jason Robertson',
+      'Andrei Vasilevskiy','Jake Oettinger','Rasmus Dahlin','Tage Thompson',
+      'Brandon Hagel','Sebastian Aho','Brayden Point','Wyatt Johnston',
+      'Scott Wedgewood','Martin Necas','Jake Guentzel','Andrei Svechnikov',
+      'Seth Jarvis','Evan Bouchard','Quinn Hughes','Filip Gustavsson',
+      'Kirill Kaprizov','Darren Raddysh',
+    ],
+    // If you have DAL: COL/TBL first, DAL stack later
+    DAL: [
+      'Cale Makar','Nikita Kucherov','Andrei Vasilevskiy','Rasmus Dahlin',
+      'Tage Thompson','Brandon Hagel','Sebastian Aho','Brayden Point',
+      'Jake Guentzel','Evan Bouchard','Quinn Hughes','Scott Wedgewood',
+      'Martin Necas','Andrei Svechnikov','Seth Jarvis','Nikolaj Ehlers',
+      'Filip Gustavsson','Kirill Kaprizov','Jack Eichel','Mitch Marner',
+      'Wyatt Johnston','Jason Robertson','Thomas Harley',
+    ],
+  };
 
-  // After R2, assume we take the top R2 rec — add to ourPicks for R3 simulation
-  if (r2[0]) ourPicks.push(r2[0].name);
-  const r3 = buildRecs(3, []);
+  // Generic fallback for any team not listed above
+  const CANDIDATES_GENERIC = [
+    'Cale Makar','Mikko Rantanen','Jason Robertson','Andrei Vasilevskiy',
+    'Jake Oettinger','Rasmus Dahlin','Tage Thompson','Brandon Hagel',
+    'Sebastian Aho','Brayden Point','Andrei Svechnikov','Jake Guentzel',
+    'Seth Jarvis','Evan Bouchard','Quinn Hughes','Scott Wedgewood',
+    'Martin Necas','Filip Gustavsson','Kirill Kaprizov','Jack Eichel',
+    'Mitch Marner','Mark Stone','Matt Boldy','Nikita Kucherov',
+    'Darren Raddysh','Nikolaj Ehlers','Logan Stankoven','Alex Tuch',
+    'Brock Nelson','Anthony Cirelli','Thomas Harley',
+  ];
 
-  if (r3[0]) ourPicks.push(r3[0].name);
-  const r4 = buildRecs(4, []);
+  const priorityList = (CANDIDATES_BY_PRIORITY[R1_TEAM] || CANDIDATES_GENERIC)
+    .filter(n => n !== pick);
+
+  function buildRecs(round, currentRosterTeams, currentRosterPos) {
+    const avail = availableAtRound(round);
+    const availNames = new Set(avail.map(x => x.name));
+    return priorityList
+      .filter(n => availNames.has(n))
+      .slice(0, 5)
+      .map(n => ({
+        name: n,
+        note: noteFor(n, currentRosterTeams, currentRosterPos),
+      }));
+  }
+
+  const r2 = buildRecs(2, rosterTeams, rosterPos);
+
+  // Simulate picking top R2 rec — update roster state for R3
+  if (r2[0]) {
+    const r2p = PLAYERS.find(x => x.name === r2[0].name);
+    if (r2p) { rosterTeams.add(r2p.team); rosterPos.add(r2p.pos); }
+    ourPicks.push(r2[0].name);
+  }
+  const r3 = buildRecs(3, rosterTeams, rosterPos);
+
+  if (r3[0]) {
+    const r3p = PLAYERS.find(x => x.name === r3[0].name);
+    if (r3p) { rosterTeams.add(r3p.team); rosterPos.add(r3p.pos); }
+    ourPicks.push(r3[0].name);
+  }
+  const r4 = buildRecs(4, rosterTeams, rosterPos);
 
   // Hero note
   const heroNotes = {
@@ -744,6 +800,7 @@ function renderBoard() {
       if(DRAFTED.has(n)) DRAFTED.delete(n); else DRAFTED.add(n);
       sessionStorage.setItem('drafted',JSON.stringify([...DRAFTED]));
       renderBoard();
+      renderTeams();
     });
   });
 }
@@ -781,29 +838,18 @@ function renderTeams() {
   const ordered=['COL','DAL','CAR','TBL','VGK','MIN','BUF','EDM','OTT','MTL','UTA','PIT','PHI','BOS','ANA','LAK'];
   document.getElementById('team-grid').innerHTML = ordered.map(t=>{
     const info=TEAMS[t], color=TC[t]||'#666';
-    const roster=PLAYERS.filter(p=>p.team===t).slice(0,8);
-    const rows=roster.map(p=>{
-      const isMine = p.name===myPick;
-      const isRec  = allRecs.includes(p.name);
-      const tag    = isMine?' ←YOUR PICK':(isRec?' ←REC':'');
-      return `<div class="team-player">
-        <div class="tp-left">
-          <span class="tp-rank">#${p.overall}</span>
-          <span class="tp-name">${p.name}</span>
-          <span class="pos-pill pos-${p.pos}">${p.pos}</span>
-          ${tag?`<span class="tp-tag">${tag}</span>`:''}
-        </div>
-        <span class="mini-avg">${p.avg}</span>
-      </div>`;
-    }).join('');
-    return `<div class="team-card" style="--team-color:${color}">
-      <div class="team-card-header">
-        <div class="team-name">${info.name}</div>
-        <div class="team-meta"><span class="team-code">${t}</span><span class="tier-badge tier-${info.tier}">T${info.tier} · ${info.path}</span></div>
-        <div class="team-note">${info.note}</div>
-      </div>
-      <div class="team-roster">${rows}</div>
-    </div>`;
+    const roster=PLAYERS.filter(p=>p.team===t);
+    const available=roster.filter(p=>!DRAFTED.has(p.name));
+    const draftedRoster=roster.filter(p=>DRAFTED.has(p.name));
+    function makeRow(p,isDrafted){
+      const isMine=p.name===myPick, isRec=allRecs.includes(p.name);
+      const tag=isMine?' \u2190YOUR PICK':(isRec?' \u2190REC':'');
+      const style=isDrafted?'opacity:.3;text-decoration:line-through;':'';
+      return `<div class="team-player" style="${style}"><div class="tp-left"><span class="tp-rank">#${p.overall}</span><span class="tp-name">${p.name}</span><span class="pos-pill pos-${p.pos}">${p.pos}</span>${tag?`<span class="tp-tag">${tag}</span>`:''}</div><span class="mini-avg">${p.avg}</span></div>`;
+    }
+    const draftedDivider=draftedRoster.length?`<div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--ice-fade);padding:6px 0 2px;text-transform:uppercase;">\u2500\u2500 ${draftedRoster.length} drafted \u2500\u2500</div>`:'';
+    const rows=[...available.map(p=>makeRow(p,false)),draftedDivider,...draftedRoster.map(p=>makeRow(p,true))].join('');
+    return `<div class="team-card" style="--team-color:${color}"><div class="team-card-header"><div class="team-name">${info.name}</div><div class="team-meta"><span class="team-code">${t}</span><span class="tier-badge tier-${info.tier}">T${info.tier} \u00b7 ${info.path}</span></div><div class="team-note">${info.note}</div></div><div class="team-roster">${rows}</div></div>`;
   }).join('');
 }
 
