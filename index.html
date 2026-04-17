@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 Stanley Cup Playoffs · Draft Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0e14; --bg-2:#11161f; --bg-3:#1a202c;
+  --ice:#e8f0ff; --ice-dim:#9ca8bb; --ice-fade:#5b6578;
+  --red:#e11d3f; --red-glow:rgba(225,29,63,.4);
+  --gold:#d4af37; --accent:#4dd0e1; --green:#10b981;
+  --border:#212836; --border-bright:#2d3648;
+  --tier1:#f59e0b; --tier2:#10b981; --tier3:#6366f1; --tier4:#64748b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--ice);line-height:1.5;min-height:100vh;
+  background-image:radial-gradient(ellipse at top,rgba(77,208,225,.06),transparent 50%),radial-gradient(ellipse at bottom,rgba(225,29,63,.05),transparent 50%);
+  background-attachment:fixed}
+
+/* ── HEADER ── */
+header{border-bottom:1px solid var(--border);padding:28px 40px 20px;position:relative;overflow:hidden}
+header::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--red) 0%,var(--gold) 50%,var(--accent) 100%)}
+.header-inner{max-width:1400px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.title-block h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,4.5vw,52px);letter-spacing:2px;line-height:1;
+  background:linear-gradient(180deg,#fff 0%,var(--ice-dim) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.title-block .subtitle{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:3px;color:var(--ice-fade);margin-top:6px}
+.meta-badges{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.badge{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;
+  padding:5px 10px;border-radius:3px;border:1px solid var(--border-bright);background:var(--bg-2);color:var(--ice-dim)}
+.badge.live{color:var(--red);border-color:var(--red);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 var(--red-glow)}50%{box-shadow:0 0 0 6px transparent}}
+
+/* ── PICK BANNER ── */
+#pick-banner{background:var(--bg-2);border-bottom:1px solid var(--border-bright);padding:0 40px}
+.pick-banner-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;gap:20px;padding:16px 0;flex-wrap:wrap}
+.pick-label-txt{font-family:'JetBrains Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:2px;color:var(--ice-fade);white-space:nowrap}
+#pick-input-wrap{position:relative;flex:1;min-width:220px;max-width:360px}
+#pick-input{width:100%;background:var(--bg);border:1px solid var(--border-bright);border-radius:4px;
+  color:var(--ice);padding:10px 14px;font-family:'Inter',sans-serif;font-size:14px;outline:none;transition:border-color .2s}
+#pick-input:focus{border-color:var(--accent)}
+#pick-input::placeholder{color:var(--ice-fade)}
+#pick-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--bg-3);
+  border:1px solid var(--border-bright);border-radius:4px;z-index:100;overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,0,0,.6);display:none;max-height:280px;overflow-y:auto}
+#pick-dropdown.show{display:block}
+.pick-opt{padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .1s}
+.pick-opt:hover,.pick-opt.focused{background:var(--bg-2)}
+.pick-opt .po-rank{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--gold);min-width:28px}
+.pick-opt .po-name{font-weight:600;color:var(--ice)}
+.pick-opt .po-meta{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ice-fade);letter-spacing:.5px}
+
+#my-pick-display{display:none;align-items:center;gap:12px;padding:8px 16px;
+  background:rgba(77,208,225,.08);border:1px solid rgba(77,208,225,.3);border-radius:5px}
+#my-pick-display .mpd-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--accent)}
+#my-pick-display .mpd-name{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:var(--ice)}
+#my-pick-display .mpd-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ice-dim)}
+#my-pick-display button{background:none;border:1px solid var(--border-bright);color:var(--ice-fade);
+  padding:4px 10px;border-radius:3px;font-size:11px;cursor:pointer;letter-spacing:.5px;white-space:nowrap}
+#my-pick-display button:hover{color:var(--ice);border-color:var(--ice-dim)}
+
+/* ── NAV ── */
+.nav-tabs{max-width:1400px;margin:0 auto;padding:0 40px;display:flex;border-bottom:1px solid var(--border);overflow-x:auto}
+.nav-tabs button{background:none;border:none;color:var(--ice-fade);padding:14px 22px;
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;
+  cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap}
+.nav-tabs button:hover{color:var(--ice)}
+.nav-tabs button.active{color:var(--ice);border-bottom-color:var(--red)}
+
+/* ── MAIN ── */
+main{max-width:1400px;margin:0 auto;padding:28px 40px 80px}
+.panel{display:none}
+.panel.active{display:block;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── STRATEGY PANEL ── */
+#strategy-content{}
+
+/* Pre-pick state */
+#pre-pick{text-align:center;padding:60px 20px}
+#pre-pick h2{font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:2px;color:var(--ice-dim);margin-bottom:12px}
+#pre-pick p{color:var(--ice-fade);font-size:14px;max-width:420px;margin:0 auto;line-height:1.7}
+.pre-pick-arrow{font-size:28px;margin-bottom:16px;animation:bounce .8s ease-in-out infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+/* Post-pick strategy */
+#post-pick{display:none}
+
+.my-pick-hero{
+  background:linear-gradient(135deg,var(--bg-2),var(--bg-3));
+  border:1px solid var(--border-bright);border-radius:6px;padding:28px 32px;
+  margin-bottom:20px;display:flex;align-items:center;gap:32px;flex-wrap:wrap;
+  position:relative;overflow:hidden}
+.my-pick-hero::before{content:'YOUR PICK 3';position:absolute;top:16px;right:20px;
+  font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--ice-fade)}
+.mph-num{font-family:'Bebas Neue',sans-serif;font-size:96px;line-height:1;
+  color:var(--accent);text-shadow:0 0 40px rgba(77,208,225,.4);flex-shrink:0}
+.mph-body{}
+.mph-name{font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:2px;color:var(--ice);line-height:1}
+.mph-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ice-dim);letter-spacing:1px;margin-top:4px}
+.mph-note{margin-top:12px;color:var(--ice-dim);font-size:13px;max-width:520px;line-height:1.6}
+.mph-note strong{color:var(--ice)}
+
+/* Round grid */
+.round-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:20px}
+.round-card{background:var(--bg-2);border:1px solid var(--border);border-radius:6px;padding:20px}
+.round-card h3{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--gold);margin-bottom:2px}
+.round-card .round-picks{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;
+  letter-spacing:1.5px;color:var(--ice-fade);margin-bottom:14px}
+.rec-list{list-style:none}
+.rec-list li{padding:9px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start}
+.rec-list li:last-child{border-bottom:none}
+.rec-num{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--red);min-width:22px;flex-shrink:0}
+.rec-body strong{display:block;color:var(--ice);margin-bottom:1px;font-size:13px}
+.rec-body span{font-size:12px;color:var(--ice-dim)}
+
+.warning-card{background:linear-gradient(135deg,rgba(225,29,63,.08),transparent);
+  border:1px solid rgba(225,29,63,.3);border-left:3px solid var(--red);
+  border-radius:6px;padding:18px;margin-bottom:14px}
+.warning-card h4{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1.5px;color:var(--red);margin-bottom:10px}
+.warning-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:6px 20px}
+.warning-list li{font-size:12px;color:var(--ice-dim);padding-left:14px;position:relative}
+.warning-list li::before{content:'✕';position:absolute;left:0;color:var(--red);font-weight:700}
+
+.gem-card{background:linear-gradient(135deg,rgba(212,175,55,.08),transparent);
+  border:1px solid rgba(212,175,55,.3);border-left:3px solid var(--gold);border-radius:6px;padding:18px}
+.gem-card h4{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:1.5px;color:var(--gold);margin-bottom:10px}
+.gem-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.gem-group strong{display:block;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--gold);margin-bottom:3px}
+.gem-group span{font-size:12px;color:var(--ice-dim)}
+
+/* ── BIG BOARD ── */
+.filter-bar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center;
+  background:var(--bg-2);border:1px solid var(--border);border-radius:6px;padding:10px}
+.search-input{flex:1;min-width:200px;background:var(--bg);border:1px solid var(--border-bright);
+  color:var(--ice);padding:9px 13px;font-family:'Inter',sans-serif;font-size:13px;border-radius:4px;outline:none;transition:border-color .2s}
+.search-input:focus{border-color:var(--accent)}
+.search-input::placeholder{color:var(--ice-fade)}
+.filter-group{display:flex;gap:3px;flex-wrap:wrap}
+.filter-btn{background:var(--bg);border:1px solid var(--border-bright);color:var(--ice-dim);
+  padding:7px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;
+  text-transform:uppercase;letter-spacing:1px;cursor:pointer;border-radius:3px;transition:all .15s}
+.filter-btn:hover{color:var(--ice);border-color:var(--ice-fade)}
+.filter-btn.active{background:var(--red);border-color:var(--red);color:#fff}
+.result-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ice-fade);letter-spacing:1px;margin-left:auto;padding:0 6px}
+
+.table-wrap{background:var(--bg-2);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{background:var(--bg-3);position:sticky;top:0;z-index:10}
+th{text-align:left;padding:11px 13px;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;
+  text-transform:uppercase;letter-spacing:1.5px;color:var(--ice-fade);border-bottom:1px solid var(--border-bright);
+  cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{color:var(--ice)}
+th.sorted{color:var(--accent)}
+th .sort-arrow{opacity:.6;margin-left:3px;font-size:9px}
+td{padding:9px 13px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr{transition:background .1s}
+tbody tr:hover{background:var(--bg-3)}
+
+/* ── ROW STATES ── */
+tbody tr.drafted{opacity:.3;text-decoration:line-through}
+tbody tr.drafted:hover{background:var(--bg-3);opacity:.45}
+
+/* My pick row */
+tbody tr.my-pick-row{
+  background:linear-gradient(90deg,rgba(77,208,225,.12) 0%,rgba(77,208,225,.04) 100%) !important;
+  border-left:3px solid var(--accent);
+  outline:1px solid rgba(77,208,225,.3);
+  outline-offset:-1px;
+}
+tbody tr.my-pick-row td.name-cell::after{
+  content:' ← YOUR PICK';
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px;
+  color:var(--accent);
+  letter-spacing:1.5px;
+  margin-left:8px;
+}
+
+/* Next-best recommendation rows */
+tbody tr.rec-row-1{background:linear-gradient(90deg,rgba(16,185,129,.10) 0%,rgba(16,185,129,.03) 100%) !important}
+tbody tr.rec-row-2{background:linear-gradient(90deg,rgba(212,175,55,.10) 0%,rgba(212,175,55,.03) 100%) !important}
+tbody tr.rec-row-3{background:linear-gradient(90deg,rgba(99,102,241,.10) 0%,rgba(99,102,241,.03) 100%) !important}
+
+tbody tr.rec-row-1 td.name-cell::after{content:' ← R2 TARGET';font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--green);letter-spacing:1.5px;margin-left:8px}
+tbody tr.rec-row-2 td.name-cell::after{content:' ← R3 TARGET';font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--gold);letter-spacing:1.5px;margin-left:8px}
+tbody tr.rec-row-3 td.name-cell::after{content:' ← R4 TARGET';font-family:'JetBrains Mono',monospace;font-size:9px;color:#818cf8;letter-spacing:1.5px;margin-left:8px}
+
+/* Avoid row */
+tbody tr.avoid-row td.name-cell::after{content:' ← FADE';font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--red);letter-spacing:1.5px;margin-left:8px}
+tbody tr.avoid-row{opacity:.55}
+
+.rank-cell{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--ice-dim);letter-spacing:1px;text-align:right;min-width:36px}
+.rank-cell.top5{color:var(--gold)}
+.rank-cell.top20{color:var(--accent)}
+.name-cell{font-weight:600;color:var(--ice);white-space:nowrap}
+
+.pos-pill{display:inline-block;padding:2px 7px;border-radius:3px;font-family:'JetBrains Mono',monospace;
+  font-size:10px;font-weight:600;letter-spacing:.5px;text-align:center;min-width:28px}
+.pos-C{background:rgba(77,208,225,.15);color:var(--accent);border:1px solid rgba(77,208,225,.3)}
+.pos-LW{background:rgba(16,185,129,.15);color:#34d399;border:1px solid rgba(16,185,129,.3)}
+.pos-RW{background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid rgba(245,158,11,.3)}
+.pos-D{background:rgba(99,102,241,.15);color:#818cf8;border:1px solid rgba(99,102,241,.3)}
+.pos-G{background:rgba(225,29,63,.15);color:#f87171;border:1px solid rgba(225,29,63,.3)}
+
+.team-cell{display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px}
+.team-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.rank-src{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ice-dim);text-align:center}
+.rank-src.dash{color:var(--ice-fade)}
+.avg-cell{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--gold);text-align:right}
+.tier-badge{display:inline-block;padding:2px 7px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase}
+.tier-1{background:rgba(245,158,11,.15);color:var(--tier1);border:1px solid rgba(245,158,11,.4)}
+.tier-2{background:rgba(16,185,129,.15);color:var(--tier2);border:1px solid rgba(16,185,129,.4)}
+.tier-3{background:rgba(99,102,241,.15);color:var(--tier3);border:1px solid rgba(99,102,241,.4)}
+.tier-4{background:rgba(100,116,139,.15);color:var(--tier4);border:1px solid rgba(100,116,139,.4)}
+.path-cell{font-size:12px;color:var(--ice-dim);white-space:nowrap}
+.draft-btn{background:none;border:1px solid var(--border-bright);color:var(--ice-fade);
+  width:24px;height:24px;border-radius:3px;cursor:pointer;font-size:12px;transition:all .15s}
+.draft-btn:hover{color:var(--ice);border-color:var(--ice-fade)}
+tr.drafted .draft-btn{background:var(--red);border-color:var(--red);color:#fff}
+
+/* ── POSITION GRID ── */
+.pos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:18px}
+.pos-card{background:var(--bg-2);border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.pos-card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.pos-card-header h3{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px}
+.pos-card-header .count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ice-fade);letter-spacing:1px}
+.mini-table{width:100%;font-size:12px}
+.mini-table td{padding:7px 18px;border-bottom:1px solid var(--border)}
+.mini-table tr:last-child td{border-bottom:none}
+.mini-table tr.pos-mypick td{background:rgba(77,208,225,.08);font-weight:700}
+.mini-table tr.pos-rec td{background:rgba(16,185,129,.07)}
+.mini-rank{font-family:'Bebas Neue',sans-serif;font-size:15px;color:var(--ice-fade);width:28px}
+.mini-rank.top3{color:var(--gold)}
+.mini-team{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ice-fade);letter-spacing:1px}
+.mini-avg{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold);text-align:right}
+.mini-tag{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--accent);letter-spacing:1px;text-align:right;padding-left:4px}
+
+/* ── TEAM GRID ── */
+.team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.team-card{background:var(--bg-2);border:1px solid var(--border);border-radius:6px;overflow:hidden;transition:transform .2s,border-color .2s}
+.team-card:hover{transform:translateY(-2px);border-color:var(--border-bright)}
+.team-card-header{padding:14px 18px;border-bottom:1px solid var(--border);position:relative}
+.team-card-header::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--team-color)}
+.team-name{font-family:'Bebas Neue',sans-serif;font-size:19px;letter-spacing:1.5px;color:var(--ice);margin-bottom:1px}
+.team-meta{display:flex;gap:8px;align-items:center;margin-top:5px}
+.team-code{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ice-fade);letter-spacing:1.5px}
+.team-note{font-size:12px;color:var(--ice-dim);margin-top:6px;font-style:italic}
+.team-roster{padding:10px 18px}
+.team-player{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+.team-player:last-child{border-bottom:none}
+.tp-left{display:flex;gap:7px;align-items:center}
+.tp-rank{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ice-fade);min-width:24px}
+.tp-name{color:var(--ice)}
+.tp-tag{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--accent);letter-spacing:1px;margin-left:4px}
+
+/* ── FOOTER ── */
+footer{max-width:1400px;margin:40px auto 0;padding:20px 40px;border-top:1px solid var(--border);
+  font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ice-fade);letter-spacing:1px;text-align:center;line-height:1.8}
+
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border-bright);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--ice-fade)}
+
+@media(max-width:700px){
+  header,#pick-banner,.nav-tabs,main,footer{padding-left:16px;padding-right:16px}
+  .mph-num{font-size:64px}
+  th.hide-mobile,td.hide-mobile{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div class="header-inner">
+    <div class="title-block">
+      <h1>2026 Stanley Cup · Draft Board</h1>
+      <div class="subtitle">Pick 3 · Snake Draft · Matchup-Weighted Rankings</div>
+    </div>
+    <div class="meta-badges">
+      <span class="badge live">● Live Board</span>
+      <span class="badge">Updated Apr 16, 2026</span>
+      <span class="badge">Playoffs start Apr 18</span>
+    </div>
+  </div>
+</header>
+
+<!-- ══ PICK BANNER ══ -->
+<div id="pick-banner">
+  <div class="pick-banner-inner">
+    <span class="pick-label-txt">Your Pick 3:</span>
+    <div id="pick-input-wrap">
+      <input id="pick-input" type="text" placeholder="Type who you drafted at #3..." autocomplete="off">
+      <div id="pick-dropdown"></div>
+    </div>
+    <div id="my-pick-display">
+      <span class="mpd-label">Picked</span>
+      <span class="mpd-name" id="mpd-name"></span>
+      <span class="mpd-meta" id="mpd-meta"></span>
+      <button id="clear-pick">Change Pick</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ NAV ══ -->
+<nav>
+  <div class="nav-tabs">
+    <button class="active" data-panel="strategy">◈ Your Strategy</button>
+    <button data-panel="bigboard">Big Board</button>
+    <button data-panel="positions">By Position</button>
+    <button data-panel="teams">By Team</button>
+  </div>
+</nav>
+
+<!-- ══ MAIN ══ -->
+<main>
+
+<!-- STRATEGY PANEL -->
+<section class="panel active" id="panel-strategy">
+  <div id="strategy-content">
+
+    <!-- PRE-PICK STATE -->
+    <div id="pre-pick">
+      <div class="pre-pick-arrow">↑</div>
+      <h2>Enter Your Pick 3</h2>
+      <p>Type the player you draft at pick #3 above and this board will instantly update with tailored round-by-round recommendations, big board highlights, and stack suggestions built around your pick.</p>
+    </div>
+
+    <!-- POST-PICK STATE (hidden until pick entered) -->
+    <div id="post-pick">
+      <div class="my-pick-hero">
+        <div class="mph-num">03</div>
+        <div class="mph-body">
+          <div class="mph-name" id="hero-name">—</div>
+          <div class="mph-meta" id="hero-meta">—</div>
+          <p class="mph-note" id="hero-note">—</p>
+        </div>
+      </div>
+
+      <div class="round-grid" id="round-grid-dynamic"></div>
+
+      <div class="warning-card">
+        <h4>✕ Avoid These — R1 Exit Risk</h4>
+        <p style="color:var(--ice-dim);font-size:13px;margin-bottom:10px">Elite talent stuck on teams likely out in Round 1. Let others reach.</p>
+        <ul class="warning-list">
+          <li><strong>David Pastrnak (BOS)</strong> — R1 underdog vs Buffalo</li>
+          <li><strong>Artemi Panarin (LAK)</strong> — Kings vs COL likely sweep</li>
+          <li><strong>Clayton Keller / Dylan Guenther (UTA)</strong> — underdog vs VGK</li>
+          <li><strong>Adrian Kempe (LAK)</strong> — same Kings problem</li>
+          <li><strong>Morgan Geekie (BOS)</strong> — same Bruins problem</li>
+        </ul>
+      </div>
+
+      <div class="gem-card">
+        <h4>◆ Late-Round Gems — Stack Your Contenders</h4>
+        <p style="color:var(--ice-dim);font-size:13px;margin-bottom:10px">Role players on deep-run teams outscore stars who exit early. Rounds 6-10:</p>
+        <div class="gem-list" id="gem-list-dynamic"></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- BIG BOARD PANEL -->
+<section class="panel" id="panel-bigboard">
+  <div class="filter-bar">
+    <input type="text" class="search-input" id="search" placeholder="Search player or team…">
+    <div class="filter-group" id="pos-filter">
+      <button class="filter-btn active" data-pos="ALL">All</button>
+      <button class="filter-btn" data-pos="C">C</button>
+      <button class="filter-btn" data-pos="LW">LW</button>
+      <button class="filter-btn" data-pos="RW">RW</button>
+      <button class="filter-btn" data-pos="D">D</button>
+      <button class="filter-btn" data-pos="G">G</button>
+    </div>
+    <div class="filter-group" id="tier-filter">
+      <button class="filter-btn active" data-tier="ALL">All Tiers</button>
+      <button class="filter-btn" data-tier="1">T1 Cup</button>
+      <button class="filter-btn" data-tier="2">T2 ECF</button>
+      <button class="filter-btn" data-tier="3">T3 R1</button>
+      <button class="filter-btn" data-tier="4">T4 Dog</button>
+    </div>
+    <span class="result-count" id="count">0 players</span>
+  </div>
+  <div class="table-wrap">
+    <table id="board">
+      <thead>
+        <tr>
+          <th data-sort="overall" class="sorted">Rnk <span class="sort-arrow">▼</span></th>
+          <th data-sort="name">Player</th>
+          <th data-sort="pos">Pos</th>
+          <th data-sort="team">Team</th>
+          <th data-sort="nhl" class="hide-mobile">NHL.com</th>
+          <th data-sort="df" class="hide-mobile">DailyFO</th>
+          <th data-sort="rw" class="hide-mobile">RotoW</th>
+          <th data-sort="avg">Avg</th>
+          <th data-sort="tier" class="hide-mobile">Tier</th>
+          <th data-sort="path" class="hide-mobile">Path</th>
+          <th>✓</th>
+        </tr>
+      </thead>
+      <tbody id="board-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- POSITIONS PANEL -->
+<section class="panel" id="panel-positions">
+  <div class="pos-grid" id="pos-grid"></div>
+</section>
+
+<!-- TEAMS PANEL -->
+<section class="panel" id="panel-teams">
+  <div class="team-grid" id="team-grid"></div>
+</section>
+
+</main>
+
+<footer>
+  DATA · NHL.com (Jensen, Meaney, Perlowitz) · Daily Faceoff (Matt Larkin) · RotoWire (Ryan Dadoun) · Current as of Apr 16, 2026<br>
+  ADP NOTE · Playoff pools are private/casual — no public ADP exists. The Avg column blends 3 expert sources as the best proxy.
+</footer>
+
+<script>
+const PLAYERS = [{"name": "Nathan MacKinnon", "pos": "C", "team": "COL", "nhl": 1, "df": 1, "rw": 1, "avg": 1.0, "tier": 1, "path": "SCF contender", "overall": 1}, {"name": "Connor McDavid", "pos": "C", "team": "EDM", "nhl": 2, "df": 2, "rw": 3, "avg": 2.3, "tier": 2, "path": "R2 possible", "overall": 2}, {"name": "Nikita Kucherov", "pos": "RW", "team": "TBL", "nhl": 3, "df": 6, "rw": 2, "avg": 3.7, "tier": 2, "path": "R2 / ECF run", "overall": 3}, {"name": "Cale Makar", "pos": "D", "team": "COL", "nhl": 5, "df": 3, "rw": 5, "avg": 4.3, "tier": 1, "path": "SCF contender", "overall": 4}, {"name": "Martin Necas", "pos": "RW", "team": "COL", "nhl": 4, "df": 5, "rw": 6, "avg": 5.0, "tier": 1, "path": "SCF contender", "overall": 5}, {"name": "Mikko Rantanen", "pos": "RW", "team": "DAL", "nhl": 7, "df": 11, "rw": 4, "avg": 7.3, "tier": 1, "path": "SCF contender", "overall": 6}, {"name": "Evan Bouchard", "pos": "D", "team": "EDM", "nhl": 14, "df": 4, "rw": 11, "avg": 9.7, "tier": 2, "path": "R2 possible", "overall": 7}, {"name": "Jake Guentzel", "pos": "LW", "team": "TBL", "nhl": 10, "df": 9, "rw": 14, "avg": 11.0, "tier": 2, "path": "R2 / ECF run", "overall": 8}, {"name": "Leon Draisaitl", "pos": "C", "team": "EDM", "nhl": 6, "df": 21, "rw": 7, "avg": 11.3, "tier": 2, "path": "R2 possible", "overall": 9}, {"name": "Jason Robertson", "pos": "LW", "team": "DAL", "nhl": 13, "df": 14, "rw": 10, "avg": 12.3, "tier": 1, "path": "SCF contender", "overall": 10}, {"name": "Andrei Vasilevskiy", "pos": "G", "team": "TBL", "nhl": "1 (G)", "df": 7, "rw": 20, "avg": 12.3, "tier": 2, "path": "R2 / ECF run", "overall": 11}, {"name": "Wyatt Johnston", "pos": "C", "team": "DAL", "nhl": 11, "df": 18, "rw": 13, "avg": 14.0, "tier": 1, "path": "SCF contender", "overall": 12}, {"name": "Kirill Kaprizov", "pos": "LW", "team": "MIN", "nhl": 12, "df": 12, "rw": 24, "avg": 16.0, "tier": 2, "path": "R2 / WCF run", "overall": 13}, {"name": "Scott Wedgewood", "pos": "G", "team": "COL", "nhl": "2 (G)", "df": 29, "rw": 8, "avg": 16.0, "tier": 1, "path": "SCF contender", "overall": 14}, {"name": "Tage Thompson", "pos": "C", "team": "BUF", "nhl": 20, "df": 10, "rw": 21, "avg": 17.0, "tier": 2, "path": "R2 likely", "overall": 15}, {"name": "Jack Eichel", "pos": "C", "team": "VGK", "nhl": 15, "df": 22, "rw": 15, "avg": 17.3, "tier": 2, "path": "R2 / WCF run", "overall": 16}, {"name": "Rasmus Dahlin", "pos": "D", "team": "BUF", "nhl": 28, "df": 8, "rw": 17, "avg": 17.7, "tier": 2, "path": "R2 likely", "overall": 17}, {"name": "Brandon Hagel", "pos": "LW", "team": "TBL", "nhl": 9, "df": 31, "rw": 18, "avg": 19.3, "tier": 2, "path": "R2 / ECF run", "overall": 18}, {"name": "Mark Stone", "pos": "RW", "team": "VGK", "nhl": 24, "df": 24, "rw": 12, "avg": 20.0, "tier": 2, "path": "R2 / WCF run", "overall": 19}, {"name": "Matt Boldy", "pos": "RW", "team": "MIN", "nhl": 18, "df": 17, "rw": 28, "avg": 21.0, "tier": 2, "path": "R2 / WCF run", "overall": 20}, {"name": "Jake Oettinger", "pos": "G", "team": "DAL", "nhl": "3 (G)", "df": 19, "rw": 32, "avg": 21.0, "tier": 1, "path": "SCF contender", "overall": 21}, {"name": "Sebastian Aho", "pos": "C", "team": "CAR", "nhl": 26, "df": 30, "rw": 9, "avg": 21.7, "tier": 1, "path": "ECF contender", "overall": 22}, {"name": "Quinn Hughes", "pos": "D", "team": "MIN", "nhl": 17, "df": 15, "rw": 35, "avg": 22.3, "tier": 2, "path": "R2 / WCF run", "overall": 23}, {"name": "Nick Suzuki", "pos": "C", "team": "MTL", "nhl": 30, "df": 13, "rw": 25, "avg": 22.7, "tier": 3, "path": "R1 underdog", "overall": 24}, {"name": "Mitch Marner", "pos": "RW", "team": "VGK", "nhl": 21, "df": 26, "rw": 22, "avg": 23.0, "tier": 2, "path": "R2 / WCF run", "overall": 25}, {"name": "Frederik Andersen", "pos": "G", "team": "CAR", "nhl": "14 (G)", "df": null, "rw": null, "avg": 23.0, "tier": 1, "path": "ECF contender", "overall": 26}, {"name": "Darren Raddysh", "pos": "D", "team": "TBL", "nhl": 16, "df": 32, "rw": 23, "avg": 23.7, "tier": 2, "path": "R2 / ECF run", "overall": 27}, {"name": "Brock Nelson", "pos": "C", "team": "COL", "nhl": 19, "df": 34, "rw": 19, "avg": 24.0, "tier": 1, "path": "SCF contender", "overall": 28}, {"name": "Cole Caufield", "pos": "LW", "team": "MTL", "nhl": 31, "df": 20, "rw": 26, "avg": 25.7, "tier": 3, "path": "R1 underdog", "overall": 29}, {"name": "Andrei Svechnikov", "pos": "LW", "team": "CAR", "nhl": 27, "df": 35, "rw": 16, "avg": 26.0, "tier": 1, "path": "ECF contender", "overall": 30}, {"name": "Lane Hutson", "pos": "D", "team": "MTL", "nhl": 23, "df": 16, "rw": 41, "avg": 26.7, "tier": 3, "path": "R1 underdog", "overall": 31}, {"name": "Sidney Crosby", "pos": "C", "team": "PIT", "nhl": 33, "df": 23, "rw": 27, "avg": 27.7, "tier": 3, "path": "R1 / R2", "overall": 32}, {"name": "Adin Hill", "pos": "G", "team": "VGK", "nhl": "20 (G)", "df": null, "rw": null, "avg": 29.0, "tier": 2, "path": "R2 / WCF run", "overall": 33}, {"name": "Brayden Point", "pos": "C", "team": "TBL", "nhl": 8, "df": 33, "rw": 49, "avg": 30.0, "tier": 2, "path": "R2 / ECF run", "overall": 34}, {"name": "Seth Jarvis", "pos": "RW", "team": "CAR", "nhl": 25, "df": 36, "rw": 30, "avg": 30.3, "tier": 1, "path": "ECF contender", "overall": 35}, {"name": "Nazem Kadri", "pos": "C", "team": "COL", "nhl": 29, "df": 39, "rw": 33, "avg": 33.7, "tier": 1, "path": "SCF contender", "overall": 36}, {"name": "Tim Stutzle", "pos": "C", "team": "OTT", "nhl": 37, "df": 27, "rw": 37, "avg": 33.7, "tier": 3, "path": "R1 tossup", "overall": 37}, {"name": "Ukko-Pekka Luukkonen", "pos": "G", "team": "BUF", "nhl": "7 (G)", "df": 42, "rw": 44, "avg": 34.0, "tier": 2, "path": "R2 likely", "overall": 38}, {"name": "Miro Heiskanen", "pos": "D", "team": "DAL", "nhl": null, "df": 44, "rw": 29, "avg": 36.5, "tier": 1, "path": "SCF contender", "overall": 39}, {"name": "Alex Tuch", "pos": "RW", "team": "BUF", "nhl": 39, "df": 37, "rw": 38, "avg": 38.0, "tier": 2, "path": "R2 likely", "overall": 40}, {"name": "Brady Tkachuk", "pos": "LW", "team": "OTT", "nhl": 38, "df": 28, "rw": 48, "avg": 38.0, "tier": 3, "path": "R1 tossup", "overall": 41}, {"name": "Clayton Keller", "pos": "LW", "team": "UTA", "nhl": 40, "df": 25, "rw": 50, "avg": 38.3, "tier": 3, "path": "R1", "overall": 42}, {"name": "Nikolaj Ehlers", "pos": "LW", "team": "CAR", "nhl": 52, "df": 38, "rw": 34, "avg": 41.3, "tier": 1, "path": "ECF contender", "overall": 43}, {"name": "Nick Schmaltz", "pos": "C", "team": "UTA", "nhl": 48, "df": 54, "rw": 31, "avg": 44.3, "tier": 3, "path": "R1", "overall": 44}, {"name": "Juraj Slafkovsky", "pos": "RW", "team": "MTL", "nhl": 32, "df": 41, "rw": 62, "avg": 45.0, "tier": 3, "path": "R1 underdog", "overall": 45}, {"name": "Zach Hyman", "pos": "RW", "team": "EDM", "nhl": 35, "df": 56, "rw": 46, "avg": 45.7, "tier": 2, "path": "R2 possible", "overall": 46}, {"name": "Filip Gustavsson", "pos": "G", "team": "MIN", "nhl": "4 (G)", "df": 47, "rw": 80, "avg": 46.7, "tier": 2, "path": "R2 / WCF run", "overall": 47}, {"name": "David Pastrnak", "pos": "RW", "team": "BOS", "nhl": 22, "df": 83, "rw": 36, "avg": 47.0, "tier": 3, "path": "R1 / R2", "overall": 48}, {"name": "Erik Karlsson", "pos": "D", "team": "PIT", "nhl": 34, "df": 57, "rw": 53, "avg": 48.0, "tier": 3, "path": "R1 / R2", "overall": 49}, {"name": "Shayne Gostisbehere", "pos": "D", "team": "CAR", "nhl": 53, "df": 45, "rw": 47, "avg": 48.3, "tier": 1, "path": "ECF contender", "overall": 50}, {"name": "Leo Carlsson", "pos": "C", "team": "ANA", "nhl": 56, "df": 52, "rw": 39, "avg": 49.0, "tier": 4, "path": "R1 underdog", "overall": 51}, {"name": "Cutter Gauthier", "pos": "RW", "team": "ANA", "nhl": 55, "df": 51, "rw": 42, "avg": 49.3, "tier": 4, "path": "R1 underdog", "overall": 52}, {"name": "Dylan Guenther", "pos": "RW", "team": "UTA", "nhl": 41, "df": 50, "rw": 58, "avg": 49.7, "tier": 3, "path": "R1", "overall": 53}, {"name": "Pavel Dorofeyev", "pos": "LW", "team": "VGK", "nhl": 60, "df": 59, "rw": 40, "avg": 53.0, "tier": 2, "path": "R2 / WCF run", "overall": 54}, {"name": "Roope Hintz", "pos": "C", "team": "DAL", "nhl": null, "df": 46, "rw": 61, "avg": 53.5, "tier": 1, "path": "SCF contender", "overall": 55}, {"name": "Brandon Bussi", "pos": "G", "team": "CAR", "nhl": "13 (G)", "df": 71, "rw": 68, "avg": 53.7, "tier": 1, "path": "ECF contender", "overall": 56}, {"name": "Evgeni Malkin", "pos": "C", "team": "PIT", "nhl": 42, "df": 62, "rw": 57, "avg": 53.7, "tier": 3, "path": "R1 / R2", "overall": 57}, {"name": "Drake Batherson", "pos": "RW", "team": "OTT", "nhl": 47, "df": 55, "rw": 60, "avg": 54.0, "tier": 3, "path": "R1 tossup", "overall": 58}, {"name": "Artturi Lehkonen", "pos": "LW", "team": "COL", "nhl": 61, "df": 40, "rw": 72, "avg": 57.7, "tier": 1, "path": "SCF contender", "overall": 59}, {"name": "Carter Hart", "pos": "G", "team": "VGK", "nhl": "5 (G)", "df": 112, "rw": 56, "avg": 60.7, "tier": 2, "path": "R2 / WCF run", "overall": 60}, {"name": "Anthony Cirelli", "pos": "C", "team": "TBL", "nhl": 51, "df": 77, "rw": 55, "avg": 61.0, "tier": 2, "path": "R2 / ECF run", "overall": 61}, {"name": "Jakub Dobes", "pos": "G", "team": "MTL", "nhl": "10 (G)", "df": 49, "rw": 116, "avg": 61.3, "tier": 3, "path": "R1 underdog", "overall": 62}, {"name": "Valeri Nichushkin", "pos": "RW", "team": "COL", "nhl": 68, "df": 43, "rw": 74, "avg": 61.7, "tier": 1, "path": "SCF contender", "overall": 63}, {"name": "Jake Sanderson", "pos": "D", "team": "OTT", "nhl": 46, "df": 58, "rw": 83, "avg": 62.3, "tier": 3, "path": "R1 tossup", "overall": 64}, {"name": "Ryan McLeod", "pos": "C", "team": "BUF", "nhl": null, "df": 80, "rw": 45, "avg": 62.5, "tier": 2, "path": "R2 likely", "overall": 65}, {"name": "Bryan Rust", "pos": "RW", "team": "PIT", "nhl": 44, "df": 64, "rw": 82, "avg": 63.3, "tier": 3, "path": "R1 / R2", "overall": 66}, {"name": "Artemi Panarin", "pos": "LW", "team": "LAK", "nhl": 58, "df": 84, "rw": 52, "avg": 64.7, "tier": 4, "path": "R1", "overall": 67}, {"name": "Tomas Hertl", "pos": "C", "team": "VGK", "nhl": 84, "df": 67, "rw": 43, "avg": 64.7, "tier": 2, "path": "R2 / WCF run", "overall": 68}, {"name": "Jeremy Swayman", "pos": "G", "team": "BOS", "nhl": "9 (G)", "df": 85, "rw": 92, "avg": 65.0, "tier": 3, "path": "R1 / R2", "overall": 69}, {"name": "Logan Cooley", "pos": "C", "team": "UTA", "nhl": 49, "df": 63, "rw": 87, "avg": 66.3, "tier": 3, "path": "R1", "overall": 70}, {"name": "Mats Zuccarello", "pos": "RW", "team": "MIN", "nhl": 65, "df": 69, "rw": 66, "avg": 66.7, "tier": 2, "path": "R2 / WCF run", "overall": 71}, {"name": "Matt Duchene", "pos": "C", "team": "DAL", "nhl": 63, "df": 74, "rw": 63, "avg": 66.7, "tier": 1, "path": "SCF contender", "overall": 72}, {"name": "Mikhail Sergachev", "pos": "D", "team": "UTA", "nhl": 72, "df": 61, "rw": 71, "avg": 68.0, "tier": 3, "path": "R1", "overall": 73}, {"name": "Morgan Geekie", "pos": "LW", "team": "BOS", "nhl": 43, "df": 88, "rw": 73, "avg": 68.0, "tier": 3, "path": "R1 / R2", "overall": 74}, {"name": "Brock Faber", "pos": "D", "team": "MIN", "nhl": null, "df": 72, "rw": 65, "avg": 68.5, "tier": 2, "path": "R2 / WCF run", "overall": 75}, {"name": "Ivan Demidov", "pos": "RW", "team": "MTL", "nhl": 62, "df": 48, "rw": 96, "avg": 68.7, "tier": 3, "path": "R1 underdog", "overall": 76}, {"name": "Adrian Kempe", "pos": "LW", "team": "LAK", "nhl": 57, "df": 86, "rw": 64, "avg": 69.0, "tier": 4, "path": "R1", "overall": 77}, {"name": "Dylan Cozens", "pos": "C", "team": "OTT", "nhl": 75, "df": 65, "rw": 69, "avg": 69.7, "tier": 3, "path": "R1 tossup", "overall": 78}, {"name": "Josh Doan", "pos": "RW", "team": "BUF", "nhl": 50, "df": 81, "rw": 78, "avg": 69.7, "tier": 2, "path": "R2 likely", "overall": 79}, {"name": "Ryan Nugent-Hopkins", "pos": "C", "team": "EDM", "nhl": 67, "df": 91, "rw": 51, "avg": 69.7, "tier": 2, "path": "R2 possible", "overall": 80}, {"name": "Gabriel Landeskog", "pos": "LW", "team": "COL", "nhl": 36, "df": 78, "rw": 100, "avg": 71.3, "tier": 1, "path": "SCF contender", "overall": 81}, {"name": "Logan Stankoven", "pos": "C", "team": "CAR", "nhl": 54, "df": 82, "rw": 81, "avg": 72.3, "tier": 1, "path": "ECF contender", "overall": 82}, {"name": "Ivan Barbashev", "pos": "LW", "team": "VGK", "nhl": 97, "df": 66, "rw": 54, "avg": 72.3, "tier": 2, "path": "R2 / WCF run", "overall": 83}, {"name": "Joel Eriksson Ek", "pos": "C", "team": "MIN", "nhl": 64, "df": 70, "rw": 85, "avg": 73.0, "tier": 2, "path": "R2 / WCF run", "overall": 84}, {"name": "Victor Hedman", "pos": "D", "team": "TBL", "nhl": null, "df": 73, "rw": null, "avg": 73.0, "tier": 2, "path": "R2 / ECF run", "overall": 85}, {"name": "Connor Ingram", "pos": "G", "team": "EDM", "nhl": "15 (G)", "df": 94, "rw": 104, "avg": 74.0, "tier": 2, "path": "R2 possible", "overall": 86}, {"name": "Jackson LaCombe", "pos": "D", "team": "ANA", "nhl": 80, "df": 53, "rw": 89, "avg": 74.0, "tier": 4, "path": "R1 underdog", "overall": 87}, {"name": "John Carlson", "pos": "D", "team": "ANA", "nhl": 76, "df": null, "rw": null, "avg": 76.0, "tier": 4, "path": "R1 underdog", "overall": 88}, {"name": "Jackson Blake", "pos": "RW", "team": "CAR", "nhl": 59, "df": 79, "rw": 94, "avg": 77.3, "tier": 1, "path": "ECF contender", "overall": 89}, {"name": "Travis Konecny", "pos": "RW", "team": "PHI", "nhl": 70, "df": 93, "rw": 70, "avg": 77.7, "tier": 3, "path": "R1 / R2", "overall": 90}, {"name": "Charlie McAvoy", "pos": "D", "team": "BOS", "nhl": 69, "df": 87, "rw": 77, "avg": 77.7, "tier": 3, "path": "R1 / R2", "overall": 91}, {"name": "Beckett Sennecke", "pos": "RW", "team": "ANA", "nhl": 83, "df": 60, "rw": 90, "avg": 77.7, "tier": 4, "path": "R1 underdog", "overall": 92}, {"name": "Trevor Zegras", "pos": "C", "team": "PHI", "nhl": 73, "df": 95, "rw": 67, "avg": 78.3, "tier": 3, "path": "R1 / R2", "overall": 93}, {"name": "Linus Ullmark", "pos": "G", "team": "OTT", "nhl": "6 (G)", "df": 96, "rw": 125, "avg": 78.7, "tier": 3, "path": "R1 tossup", "overall": 94}, {"name": "Karel Vejmelka", "pos": "G", "team": "UTA", "nhl": "8 (G)", "df": 89, "rw": 132, "avg": 79.3, "tier": 3, "path": "R1", "overall": 95}, {"name": "Mackenzie Blackwood", "pos": "G", "team": "COL", "nhl": "12 (G)", "df": null, "rw": 142, "avg": 81.5, "tier": 1, "path": "SCF contender", "overall": 96}, {"name": "Josh Norris", "pos": "C", "team": "BUF", "nhl": 91, "df": 76, "rw": 79, "avg": 82.0, "tier": 2, "path": "R2 likely", "overall": 97}, {"name": "James Hagens", "pos": "C", "team": "BOS", "nhl": 82, "df": null, "rw": null, "avg": 82.0, "tier": 3, "path": "R1 / R2", "overall": 98}, {"name": "Darcy Kuemper", "pos": "G", "team": "LAK", "nhl": "19 (G)", "df": null, "rw": 140, "avg": 84.0, "tier": 4, "path": "R1", "overall": 99}, {"name": "Pavel Zacha", "pos": "C", "team": "BOS", "nhl": 77, "df": 106, "rw": 75, "avg": 86.0, "tier": 3, "path": "R1 / R2", "overall": 100}, {"name": "Dan Vladar", "pos": "G", "team": "PHI", "nhl": "11 (G)", "df": 103, "rw": 138, "avg": 87.0, "tier": 3, "path": "R1 / R2", "overall": 101}, {"name": "Shea Theodore", "pos": "D", "team": "VGK", "nhl": 86, "df": 68, "rw": 107, "avg": 87.0, "tier": 2, "path": "R2 / WCF run", "overall": 102}, {"name": "Lukas Dostal", "pos": "G", "team": "ANA", "nhl": "16 (G)", "df": 97, "rw": 141, "avg": 87.7, "tier": 4, "path": "R1 underdog", "overall": 103}, {"name": "Rickard Rakell", "pos": "C", "team": "PIT", "nhl": 45, "df": 100, "rw": 118, "avg": 87.7, "tier": 3, "path": "R1 / R2", "overall": 104}, {"name": "Porter Martone", "pos": "RW", "team": "PHI", "nhl": 74, "df": 102, "rw": null, "avg": 88.0, "tier": 3, "path": "R1 / R2", "overall": 105}, {"name": "Stuart Skinner", "pos": "G", "team": "PIT", "nhl": "17 (G)", "df": 101, "rw": 139, "avg": 88.7, "tier": 3, "path": "R1 / R2", "overall": 106}, {"name": "Thomas Harley", "pos": "D", "team": "DAL", "nhl": 71, "df": 75, "rw": 123, "avg": 89.7, "tier": 1, "path": "SCF contender", "overall": 107}, {"name": "Troy Terry", "pos": "RW", "team": "ANA", "nhl": 95, "df": 90, "rw": 86, "avg": 90.3, "tier": 4, "path": "R1 underdog", "overall": 108}, {"name": "Anthony Mantha", "pos": "RW", "team": "PIT", "nhl": 89, "df": 98, "rw": 88, "avg": 91.7, "tier": 3, "path": "R1 / R2", "overall": 109}, {"name": "Mikael Granlund", "pos": "LW", "team": "ANA", "nhl": 81, "df": null, "rw": 105, "avg": 93.0, "tier": 4, "path": "R1 underdog", "overall": 110}, {"name": "Owen Tippett", "pos": "RW", "team": "PHI", "nhl": 79, "df": 99, "rw": 102, "avg": 93.3, "tier": 3, "path": "R1 / R2", "overall": 111}, {"name": "Anton Forsberg", "pos": "G", "team": "LAK", "nhl": "18 (G)", "df": 108, "rw": 145, "avg": 93.3, "tier": 4, "path": "R1", "overall": 112}, {"name": "Matt Savoie", "pos": "C", "team": "EDM", "nhl": 94, "df": null, "rw": null, "avg": 94.0, "tier": 2, "path": "R2 possible", "overall": 113}, {"name": "Matvei Michkov", "pos": "RW", "team": "PHI", "nhl": 78, "df": 111, "rw": null, "avg": 94.5, "tier": 3, "path": "R1 / R2", "overall": 114}, {"name": "Brent Burns", "pos": "D", "team": "COL", "nhl": null, "df": 130, "rw": 59, "avg": 94.5, "tier": 1, "path": "SCF contender", "overall": 115}, {"name": "Rasmus Andersson", "pos": "D", "team": "VGK", "nhl": 85, "df": 105, "rw": null, "avg": 95.0, "tier": 2, "path": "R2 / WCF run", "overall": 116}, {"name": "Egor Chinakhov", "pos": "RW", "team": "PIT", "nhl": 88, "df": 92, "rw": 108, "avg": 96.0, "tier": 3, "path": "R1 / R2", "overall": 117}, {"name": "Ryan Hartman", "pos": "C", "team": "MIN", "nhl": 66, "df": 126, "rw": 97, "avg": 96.3, "tier": 2, "path": "R2 / WCF run", "overall": 118}, {"name": "Jack Quinn", "pos": "RW", "team": "BUF", "nhl": 90, "df": 119, "rw": 84, "avg": 97.7, "tier": 2, "path": "R2 likely", "overall": 119}, {"name": "Jason Zucker", "pos": "LW", "team": "BUF", "nhl": null, "df": 120, "rw": 76, "avg": 98.0, "tier": 2, "path": "R2 likely", "overall": 120}, {"name": "Vasily Podkolzin", "pos": "RW", "team": "EDM", "nhl": 98, "df": null, "rw": null, "avg": 98.0, "tier": 2, "path": "R2 possible", "overall": 121}, {"name": "JJ Peterka", "pos": "LW", "team": "UTA", "nhl": 92, "df": 104, "rw": null, "avg": 98.0, "tier": 3, "path": "R1", "overall": 122}, {"name": "Anze Kopitar", "pos": "C", "team": "LAK", "nhl": 87, "df": null, "rw": 115, "avg": 101.0, "tier": 4, "path": "R1", "overall": 123}, {"name": "Elias Lindholm", "pos": "C", "team": "BOS", "nhl": null, "df": null, "rw": 103, "avg": 103.0, "tier": 3, "path": "R1 / R2", "overall": 124}, {"name": "Thomas Chabot", "pos": "D", "team": "OTT", "nhl": null, "df": 107, "rw": null, "avg": 107.0, "tier": 3, "path": "R1 tossup", "overall": 125}, {"name": "Mavrik Bourque", "pos": "RW", "team": "DAL", "nhl": 99, "df": 116, "rw": null, "avg": 107.5, "tier": 1, "path": "SCF contender", "overall": 126}, {"name": "Quinton Byfield", "pos": "C", "team": "LAK", "nhl": 93, "df": 109, "rw": 122, "avg": 108.0, "tier": 4, "path": "R1", "overall": 127}, {"name": "Thomas Novak", "pos": "C", "team": "PIT", "nhl": null, "df": null, "rw": 109, "avg": 109.0, "tier": 3, "path": "R1 / R2", "overall": 128}, {"name": "Alexander Nikishin", "pos": "D", "team": "CAR", "nhl": null, "df": 118, "rw": 101, "avg": 109.5, "tier": 1, "path": "ECF contender", "overall": 129}, {"name": "Chris Kreider", "pos": "LW", "team": "ANA", "nhl": null, "df": 113, "rw": 106, "avg": 109.5, "tier": 4, "path": "R1 underdog", "overall": 130}, {"name": "Taylor Hall", "pos": "LW", "team": "CAR", "nhl": 96, "df": 122, "rw": 112, "avg": 110.0, "tier": 1, "path": "ECF contender", "overall": 131}, {"name": "Casey Mittelstadt", "pos": "C", "team": "BOS", "nhl": null, "df": null, "rw": 111, "avg": 111.0, "tier": 3, "path": "R1 / R2", "overall": 132}, {"name": "Christian Dvorak", "pos": "C", "team": "PHI", "nhl": null, "df": 135, "rw": 91, "avg": 113.0, "tier": 3, "path": "R1 / R2", "overall": 133}, {"name": "K'Andre Miller", "pos": "D", "team": "CAR", "nhl": null, "df": 132, "rw": 95, "avg": 113.5, "tier": 1, "path": "ECF contender", "overall": 134}, {"name": "Claude Giroux", "pos": "RW", "team": "OTT", "nhl": null, "df": 114, "rw": null, "avg": 114.0, "tier": 3, "path": "R1 tossup", "overall": 135}, {"name": "Devon Toews", "pos": "D", "team": "COL", "nhl": null, "df": 115, "rw": null, "avg": 115.0, "tier": 1, "path": "SCF contender", "overall": 136}, {"name": "Bowen Byram", "pos": "D", "team": "BUF", "nhl": null, "df": 117, "rw": 113, "avg": 115.0, "tier": 2, "path": "R2 likely", "overall": 137}, {"name": "Shane Pinto", "pos": "C", "team": "OTT", "nhl": null, "df": 110, "rw": 120, "avg": 115.0, "tier": 3, "path": "R1 tossup", "overall": 138}, {"name": "Viktor Arvidsson", "pos": "RW", "team": "BOS", "nhl": 100, "df": 149, "rw": 98, "avg": 115.7, "tier": 3, "path": "R1 / R2", "overall": 139}, {"name": "Marcus Johansson", "pos": "LW", "team": "MIN", "nhl": null, "df": 125, "rw": 110, "avg": 117.5, "tier": 2, "path": "R2 / WCF run", "overall": 140}, {"name": "Zach Benson", "pos": "LW", "team": "BUF", "nhl": null, "df": 121, "rw": 114, "avg": 117.5, "tier": 2, "path": "R2 likely", "overall": 141}, {"name": "Jordan Staal", "pos": "C", "team": "CAR", "nhl": null, "df": 143, "rw": 93, "avg": 118.0, "tier": 1, "path": "ECF contender", "overall": 142}, {"name": "Jack Drury", "pos": "C", "team": "COL", "nhl": null, "df": null, "rw": 121, "avg": 121.0, "tier": 1, "path": "SCF contender", "overall": 143}, {"name": "Oliver Kapanen", "pos": "C", "team": "MTL", "nhl": null, "df": 127, "rw": 117, "avg": 122.0, "tier": 3, "path": "R1 underdog", "overall": 144}, {"name": "Vladimir Tarasenko", "pos": "RW", "team": "MIN", "nhl": null, "df": 123, "rw": null, "avg": 123.0, "tier": 2, "path": "R2 / WCF run", "overall": 145}, {"name": "Peyton Krebs", "pos": "LW", "team": "BUF", "nhl": null, "df": 148, "rw": 99, "avg": 123.5, "tier": 2, "path": "R2 likely", "overall": 146}, {"name": "Ridly Greig", "pos": "C", "team": "OTT", "nhl": null, "df": null, "rw": 124, "avg": 124.0, "tier": 3, "path": "R1 tossup", "overall": 147}, {"name": "Jamie Benn", "pos": "LW", "team": "DAL", "nhl": null, "df": 124, "rw": null, "avg": 124.0, "tier": 1, "path": "SCF contender", "overall": 148}, {"name": "Justin Hryckowian", "pos": "C", "team": "DAL", "nhl": null, "df": null, "rw": 128, "avg": 128.0, "tier": 1, "path": "SCF contender", "overall": 149}, {"name": "Mike Matheson", "pos": "D", "team": "MTL", "nhl": null, "df": 128, "rw": null, "avg": 128.0, "tier": 3, "path": "R1 underdog", "overall": 150}, {"name": "Fraser Minten", "pos": "C", "team": "BOS", "nhl": null, "df": null, "rw": 129, "avg": 129.0, "tier": 3, "path": "R1 / R2", "overall": 151}, {"name": "Corey Perry", "pos": "RW", "team": "TBL", "nhl": null, "df": 129, "rw": null, "avg": 129.0, "tier": 2, "path": "R2 / ECF run", "overall": 152}, {"name": "Noah Dobson", "pos": "D", "team": "BUF", "nhl": null, "df": null, "rw": 130, "avg": 130.0, "tier": 2, "path": "R2 likely", "overall": 153}, {"name": "Mattias Ekholm", "pos": "D", "team": "EDM", "nhl": null, "df": 136, "rw": 127, "avg": 131.5, "tier": 2, "path": "R2 possible", "overall": 154}, {"name": "Mattias Samuelsson", "pos": "D", "team": "BUF", "nhl": null, "df": 147, "rw": 119, "avg": 133.0, "tier": 2, "path": "R2 likely", "overall": 155}, {"name": "J.J. Moser", "pos": "D", "team": "TBL", "nhl": null, "df": 133, "rw": null, "avg": 133.0, "tier": 2, "path": "R2 / ECF run", "overall": 156}, {"name": "Sean Couturier", "pos": "C", "team": "PHI", "nhl": null, "df": null, "rw": 133, "avg": 133.0, "tier": 3, "path": "R1 / R2", "overall": 157}, {"name": "Sam Malinski", "pos": "D", "team": "COL", "nhl": null, "df": 131, "rw": 137, "avg": 134.0, "tier": 1, "path": "SCF contender", "overall": 158}, {"name": "Ross Colton", "pos": "C", "team": "COL", "nhl": null, "df": 142, "rw": 126, "avg": 134.0, "tier": 1, "path": "SCF contender", "overall": 159}, {"name": "MacKenzie Weegar", "pos": "D", "team": "UTA", "nhl": null, "df": 134, "rw": null, "avg": 134.0, "tier": 3, "path": "R1", "overall": 160}, {"name": "Mason McTavish", "pos": "C", "team": "ANA", "nhl": null, "df": 138, "rw": 131, "avg": 134.5, "tier": 4, "path": "R1 underdog", "overall": 161}, {"name": "Ryan Poehling", "pos": "C", "team": "ANA", "nhl": null, "df": null, "rw": 135, "avg": 135.0, "tier": 4, "path": "R1 underdog", "overall": 162}, {"name": "Travis Sanheim", "pos": "D", "team": "PHI", "nhl": null, "df": 137, "rw": null, "avg": 137.0, "tier": 3, "path": "R1 / R2", "overall": 163}, {"name": "Josh Manson", "pos": "D", "team": "COL", "nhl": null, "df": 140, "rw": 134, "avg": 137.0, "tier": 1, "path": "SCF contender", "overall": 164}, {"name": "Jack Roslovic", "pos": "C", "team": "EDM", "nhl": null, "df": 139, "rw": null, "avg": 139.0, "tier": 2, "path": "R2 possible", "overall": 165}, {"name": "Yanni Gourde", "pos": "C", "team": "TBL", "nhl": null, "df": 144, "rw": 136, "avg": 140.0, "tier": 2, "path": "R2 / ECF run", "overall": 166}, {"name": "Parker Kelly", "pos": "C", "team": "COL", "nhl": null, "df": 141, "rw": null, "avg": 141.0, "tier": 1, "path": "SCF contender", "overall": 167}, {"name": "Alex Lyon", "pos": "G", "team": "BUF", "nhl": null, "df": null, "rw": 143, "avg": 143.0, "tier": 2, "path": "R2 likely", "overall": 168}, {"name": "Arturs Silovs", "pos": "G", "team": "PIT", "nhl": null, "df": null, "rw": 144, "avg": 144.0, "tier": 3, "path": "R1 / R2", "overall": 169}, {"name": "Gage Goncalves", "pos": "C", "team": "TBL", "nhl": null, "df": 145, "rw": null, "avg": 145.0, "tier": 2, "path": "R2 / ECF run", "overall": 170}, {"name": "Michael Bunting", "pos": "LW", "team": "DAL", "nhl": null, "df": 146, "rw": null, "avg": 146.0, "tier": 1, "path": "SCF contender", "overall": 171}, {"name": "Tyson Foerster", "pos": "LW", "team": "PHI", "nhl": null, "df": 150, "rw": null, "avg": 150.0, "tier": 3, "path": "R1 / R2", "overall": 172}];
+const TEAMS   = {"COL": {"name": "Colorado Avalanche", "tier": 1, "path": "SCF contender", "note": "Presidents' Trophy, Cup favorite"}, "CAR": {"name": "Carolina Hurricanes", "tier": 1, "path": "ECF contender", "note": "East #1 seed, clean Metro path"}, "DAL": {"name": "Dallas Stars", "tier": 1, "path": "SCF contender", "note": "Central #2, deep even without Hintz/Heiskanen"}, "TBL": {"name": "Tampa Bay Lightning", "tier": 2, "path": "R2 / ECF run", "note": "Favored vs MTL, ECF ceiling"}, "MIN": {"name": "Minnesota Wild", "tier": 2, "path": "R2 / WCF run", "note": "Added Q. Hughes, tough R1 vs DAL"}, "VGK": {"name": "Vegas Golden Knights", "tier": 2, "path": "R2 / WCF run", "note": "Pacific champion, favorable path"}, "BUF": {"name": "Buffalo Sabres", "tier": 2, "path": "R2 likely", "note": "Atlantic champion, tough R1 vs BOS"}, "EDM": {"name": "Edmonton Oilers", "tier": 2, "path": "R2 possible", "note": "McDavid/Draisaitl, rough regular season"}, "OTT": {"name": "Ottawa Senators", "tier": 3, "path": "R1 tossup", "note": "Tough R1 vs CAR"}, "MTL": {"name": "Montreal Canadiens", "tier": 3, "path": "R1 underdog", "note": "Upset potential vs TBL"}, "UTA": {"name": "Utah Mammoth", "tier": 3, "path": "R1", "note": "R1 underdog vs VGK"}, "PIT": {"name": "Pittsburgh Penguins", "tier": 3, "path": "R1 / R2", "note": "Even R1 vs PHI"}, "PHI": {"name": "Philadelphia Flyers", "tier": 3, "path": "R1 / R2", "note": "Even R1 vs PIT"}, "BOS": {"name": "Boston Bruins", "tier": 3, "path": "R1 / R2", "note": "Swept BUF in season series"}, "ANA": {"name": "Anaheim Ducks", "tier": 4, "path": "R1 underdog", "note": "First playoffs since 2018"}, "LAK": {"name": "Los Angeles Kings", "tier": 4, "path": "R1", "note": "R1 big underdog vs COL"}};
+const TC      = {"COL": "#6F263D", "CAR": "#CC0000", "DAL": "#006847", "TBL": "#002868", "MIN": "#154734", "VGK": "#B4975A", "BUF": "#002654", "EDM": "#FF4C00", "OTT": "#C52032", "MTL": "#AF1E2D", "UTA": "#69B3E7", "PIT": "#FCB514", "PHI": "#F74902", "BOS": "#FFB81C", "ANA": "#F47A38", "LAK": "#A2AAAD"};
+
+// ── State ──
+const DRAFTED = new Set(JSON.parse(sessionStorage.getItem('drafted')||'[]'));
+let myPick    = sessionStorage.getItem('myPick') || null;  // player name
+let currentSort  = { key:'overall', dir:'asc' };
+let currentPos   = 'ALL';
+let currentTier  = 'ALL';
+let currentSearch = '';
+
+// ── Strategy logic ──
+// For each possible pick, define tailored round 2-5 targets and their team rationale.
+// Key: player name → { note, r2, r3, r4, gems }
+// r2/r3/r4 each: [{name, note}]
+
+// Avoid list (always the same)
+const AVOID = [
+  { name:'David Pastrnak',   reason:'BOS likely R1 out vs BUF' },
+  { name:'Artemi Panarin',   reason:'LAK vs COL = likely sweep' },
+  { name:'Clayton Keller',   reason:'UTA underdog vs VGK' },
+  { name:'Dylan Guenther',   reason:'UTA underdog vs VGK' },
+  { name:'Adrian Kempe',     reason:'LAK dead end vs COL' },
+  { name:'Morgan Geekie',    reason:'BOS likely R1 out' },
+];
+
+// ── Strategy engine ──
+// Snake pick positions for Pick 3:
+//   10-team: R1=#3, R2=#18, R3=#23, R4=#38, R5=#43, R6=#58 ...
+//   12-team: R1=#3, R2=#22, R3=#27, R4=#46, R5=#51, R6=#70 ...
+// Formula: R1 always pick 3. Even rounds snake back: pick = (r-1)*N + (N+1-3) = (r-1)*N + (N-2)
+//          Odd rounds: pick = (r-1)*N + 3
+// Players available at round R = all players NOT taken in picks 1..(myOverallPick(R)-1),
+// with our previous picks already removed from the pool.
+
+function snakePickNum(round, leagueSize) {
+  if (round % 2 === 1) return (round - 1) * leagueSize + 3;
+  else                 return (round - 1) * leagueSize + (leagueSize - 2);
+}
+
+function getStrategy(pick, leagueSize = 10) {
+  const p = PLAYERS.find(x => x.name === pick);
+  if (!p) return null;
+
+  // Sort by avg = ADP proxy
+  const byADP = PLAYERS.slice().sort((a, b) => a.avg - b.avg);
+
+  // Simulate: track what's been taken up to each of our picks.
+  // Our picks so far: [pick]. We'll add best available from strategy as we go.
+  const ourPicks = [pick];
+
+  function availableAtRound(round) {
+    const pickNum = snakePickNum(round, leagueSize);
+    // All picks before ours in this round = pickNum - 1 total picks taken
+    // Remove our own previous picks from the pool, then take the top (pickNum-1 - ourPrevPicks) by ADP
+    const prevOurCount = ourPicks.length; // picks we've made before this round
+    const othersGone   = pickNum - 1 - prevOurCount;
+    const takenByOthers = new Set(ourPicks);
+    let count = 0;
+    for (const pl of byADP) {
+      if (takenByOthers.has(pl.name)) continue;
+      if (count >= othersGone) break;
+      takenByOthers.add(pl.name);
+      count++;
+    }
+    return byADP.filter(pl => !takenByOthers.has(pl.name));
+  }
+
+  // Player notes
+  const NOTES = {
+    'Nathan MacKinnon':   'Best player alive on the Cup favorite. Easy R1 anchor.',
+    'Connor McDavid':     'Generational. Oilers playoff-tested, McDavid will produce regardless of seed.',
+    'Nikita Kucherov':    'TBL elite scorer — favored vs MTL R1, ECF ceiling. Pure points machine.',
+    'Cale Makar':         'Best D-man alive on COL. Cup favorite = 20+ games floor. Enormous ceiling.',
+    'Martin Necas':       'Rides the same COL run as MacKinnon. NHL.com #4, DF #5 — elite Cup-path value.',
+    'Mikko Rantanen':     'DAL SCF contender. Anchors their PP1, elite scorer.',
+    'Evan Bouchard':      'Bobby Orr-tier playoff scoring rate. EDM PP QB.',
+    'Jake Guentzel':      'TBL top wing. PP1 with Kucherov. ECF ceiling.',
+    'Andrei Vasilevskiy': '#1 goalie across all 3 sources. Vezina-level, TBL ECF run.',
+    'Jason Robertson':    'DAL SCF contender, elite winger. Great value outside top 10.',
+    'Wyatt Johnston':     'DAL C — same Cup path as Rantanen, cheaper price.',
+    'Scott Wedgewood':    'COL starter. Cup favorite wins = max goalie upside.',
+    'Rasmus Dahlin':      'BUF Atlantic champ PP D. Consistent floor.',
+    'Tage Thompson':      'BUF Atlantic champ C. Big body, big points.',
+    'Sebastian Aho':      'CAR elite C. ECF path, clean Metro bracket.',
+    'Brandon Hagel':      'TBL power forward. Two-way scorer, deep run.',
+    'Brayden Point':      'TBL C, elite playoff producer. ECF ceiling.',
+    'Andrei Svechnikov':  'CAR elite wing. ECF path guaranteed.',
+    'Seth Jarvis':        'CAR wing — plays 18+ games on the easiest Metro path.',
+    'Brock Nelson':       'COL C — same Cup run as your pick if you went COL.',
+    'Jake Oettinger':     'DAL starter on a SCF contender. Best goalie on a deep-run team.',
+    'Filip Gustavsson':   'MIN starter. Wild can reach WCF.',
+    'Darren Raddysh':     'TBL PP D — criminally underrated in deep-run scenarios.',
+    'Nazem Kadri':        'COL veteran C, Cup run depth.',
+    'Artturi Lehkonen':   'COL Cup-run wing. Playoff performer.',
+    'Valeri Nichushkin':  'COL depth — plays 20+ games if they go all the way.',
+    'Quinn Hughes':       'MIN D — added at deadline, elite PP QB on WCF contender.',
+    'Jack Eichel':        'VGK elite C, WCF ceiling.',
+    'Mitch Marner':       'VGK wing, deep-run value.',
+    'Mark Stone':         'VGK RW, WCF path.',
+    'Kirill Kaprizov':    'MIN elite winger. WCF ceiling.',
+    'Matt Boldy':         'MIN RW, deep-run depth.',
+    'Nick Suzuki':        'MTL C — TBL matchup is tough but Suzuki produces.',
+    'Cole Caufield':      'MTL LW — boom/bust but elite upside in a potential upset.',
+    'Lane Hutson':        'MTL D — elite PP QB, huge if MTL upsets TBL.',
+    'Nikolaj Ehlers':     'CAR LW — easy Metro path, undervalued.',
+    'Logan Stankoven':    'CAR C — deep run depth gem.',
+    'Alex Tuch':          'BUF wing — Atlantic champ, safe late value.',
+    'Josh Doan':          'BUF wing — underrated, BUF goes far.',
+    'Bowen Byram':        'BUF D — upside pick on Atlantic champ.',
+    'Gabriel Landeskog':  'COL LW — veteran, Cup run insurance.',
+    'Devon Toews':        'COL PP D — quiet deep-run points.',
+    'Anthony Cirelli':    'TBL two-way C — safe floor, ECF ceiling.',
+    'Pavel Dorofeyev':    'VGK LW — WCF path depth gem.',
+    'Ivan Barbashev':     'VGK LW — WCF depth.',
+    'Shea Theodore':      'VGK PP D — WCF path.',
+    'Thomas Harley':      'DAL PP D — SCF path, undervalued.',
+    'Mavrik Bourque':     'DAL RW depth — Cup run late gem.',
+    'Matt Duchene':       'DAL C depth — SCF path, late value.',
+    'Mats Zuccarello':    'MIN veteran RW — WCF depth gem.',
+    'Joel Eriksson Ek':   'MIN two-way C — WCF run floor.',
+    'Brock Faber':        'MIN D — WCF run, underrated.',
+  };
+
+  // Priority-ordered candidates for R2/R3/R4 across all contender teams.
+  // Ordered by desirability (team path + fantasy value). Engine filters to available only.
+  // Exclude same team as R1 pick from R2 (spread your risk), but allow for R3+.
+  const R1_TEAM = p.team;
+
+  const allCandidates = [
+    // Tier-1 contenders first
+    'Cale Makar','Nathan MacKinnon','Martin Necas','Mikko Rantanen','Jason Robertson',
+    'Andrei Vasilevskiy','Wyatt Johnston','Jake Oettinger','Rasmus Dahlin',
+    'Tage Thompson','Jake Guentzel','Connor McDavid','Evan Bouchard','Nikita Kucherov',
+    'Brayden Point','Brandon Hagel','Sebastian Aho','Andrei Svechnikov','Seth Jarvis',
+    'Scott Wedgewood','Brock Nelson','Darren Raddysh','Nazem Kadri','Artturi Lehkonen',
+    'Nikolaj Ehlers','Logan Stankoven','Quinn Hughes','Kirill Kaprizov','Jack Eichel',
+    'Matt Boldy','Mitch Marner','Mark Stone','Filip Gustavsson',
+    'Alex Tuch','Josh Doan','Valeri Nichushkin','Bowen Byram',
+    'Gabriel Landeskog','Devon Toews','Anthony Cirelli','Thomas Harley',
+    'Pavel Dorofeyev','Ivan Barbashev','Shea Theodore','Mavrik Bourque',
+    'Matt Duchene','Mats Zuccarello','Joel Eriksson Ek','Brock Faber',
+    'Nick Suzuki','Cole Caufield','Lane Hutson',
+  ].filter(n => n !== pick); // never recommend own pick
+
+  function buildRecs(round, excludeTeams = []) {
+    const avail = availableAtRound(round);
+    const availNames = new Set(avail.map(x => x.name));
+    return allCandidates
+      .filter(n => availNames.has(n) && !excludeTeams.includes(PLAYERS.find(x=>x.name===n)?.team))
+      .slice(0, 5)
+      .map(n => ({ name: n, note: NOTES[n] || PLAYERS.find(x=>x.name===n)?.path || '' }));
+  }
+
+  // R2: exclude R1 team to diversify (unless it's COL/TBL/DAL where stacking is the point)
+  const stackTeams = ['COL','TBL','DAL','CAR'];
+  const r2Exclude  = stackTeams.includes(R1_TEAM) ? [] : [R1_TEAM];
+  const r2 = buildRecs(2, r2Exclude);
+
+  // After R2, assume we take the top R2 rec — add to ourPicks for R3 simulation
+  if (r2[0]) ourPicks.push(r2[0].name);
+  const r3 = buildRecs(3, []);
+
+  if (r3[0]) ourPicks.push(r3[0].name);
+  const r4 = buildRecs(4, []);
+
+  // Hero note
+  const heroNotes = {
+    'Nathan MacKinnon':   'The best player alive on the Cup favorite. Straightforward R1 anchor.',
+    'Connor McDavid':     'Generational talent. Oilers playoff-tested — McDavid will dominate regardless of seed.',
+    'Nikita Kucherov':    'Elite scorer, TBL favored vs MTL R1 with ECF ceiling. Best pure point-scorer in the field.',
+    'Cale Makar':         'Best D-man alive on the Presidents\' Trophy winner. COL is the Cup favorite — 20+ games is the floor.',
+    'Martin Necas':       'Rides the exact same Colorado run as MacKinnon. NHL.com #4, DF #5 — elite Cup-path value.',
+    'Mikko Rantanen':     'Stars are a legitimate SCF contender. Rantanen anchors their PP1 and was elite all regular season.',
+    'Evan Bouchard':      'Bobby Orr-comparable playoff scoring rate for a D-man. EDM PP QB and a deep-run multiplier.',
+    'Jake Guentzel':      'TBL top wing alongside Kucherov. PP1 presence, ECF ceiling.',
+    'Andrei Vasilevskiy': '#1 goalie across all 3 sources. Vezina-caliber — can carry a championship if TBL goes deep.',
+    'Jason Robertson':    'DAL SCF contender. Robertson is an elite winger at great value outside the top 10.',
+  };
+  const heroNote = heroNotes[pick] || `Solid pick. ${p.team} projects to ${p.path} — build complementary stacks from contenders below.`;
+
+  // Gem teams (late rounds 6-10)
+  const GEM_NAMES = {
+    COL:'Valeri Nichushkin, Gabriel Landeskog, Devon Toews, Artturi Lehkonen, Ross Colton',
+    DAL:'Matt Duchene, Thomas Harley, Mavrik Bourque, Jamie Benn',
+    TBL:'Anthony Cirelli, Corey Perry, Darren Raddysh, J.J. Moser',
+    CAR:'Logan Stankoven, Jackson Blake, Taylor Hall, Nikolaj Ehlers',
+    MIN:'Mats Zuccarello, Joel Eriksson Ek, Brock Faber, Ryan Hartman',
+    BUF:'Alex Tuch, Josh Doan, Bowen Byram, Josh Norris',
+    VGK:'Pavel Dorofeyev, Ivan Barbashev, Shea Theodore, Rasmus Andersson',
+    EDM:'Ryan Nugent-Hopkins, Zach Hyman, Vasily Podkolzin',
+    OTT:'Drake Batherson, Jake Sanderson, Dylan Cozens',
+  };
+  const contenderOrder = ['COL','DAL','TBL','CAR','MIN','BUF','VGK','EDM'];
+  // Put own team first, then other contenders
+  const gemTeams = [R1_TEAM, ...contenderOrder.filter(t => t !== R1_TEAM)];
+  const gems = gemTeams.slice(0,6)
+    .filter(t => GEM_NAMES[t])
+    .map(t => ({ team:t, names:GEM_NAMES[t] }));
+
+  // Pick numbers for display
+  const r2Pick = snakePickNum(2, 10);
+  const r3Pick = snakePickNum(3, 10);
+  const r4Pick = snakePickNum(4, 10);
+
+  return { p, heroNote, r2, r3, r4, gems, r2Pick, r3Pick, r4Pick };
+}
+
+// ── Labels for big board rows ──
+function getRowClass(playerName, strategyData) {
+  if (!strategyData) return '';
+  if (playerName === myPick) return 'my-pick-row';
+  if (AVOID.some(a => a.name === playerName)) return 'avoid-row';
+  if (strategyData.r2.some(x => x.name === playerName)) return 'rec-row-1';
+  if (strategyData.r3.some(x => x.name === playerName)) return 'rec-row-2';
+  if (strategyData.r4.some(x => x.name === playerName)) return 'rec-row-3';
+  return '';
+}
+
+// ── Render strategy panel ──
+function renderStrategy() {
+  const pre  = document.getElementById('pre-pick');
+  const post = document.getElementById('post-pick');
+  if (!myPick) { pre.style.display='block'; post.style.display='none'; return; }
+  pre.style.display = 'none';
+  post.style.display = 'block';
+
+  const s = getStrategy(myPick);
+  if (!s) return;
+
+  // Hero
+  document.getElementById('hero-name').textContent = s.p.name;
+  document.getElementById('hero-meta').textContent = `${s.p.pos} · ${s.p.team} · Avg Rank ${s.p.avg} · ${s.p.path}`;
+  document.getElementById('hero-note').innerHTML = s.heroNote;
+
+  // Round cards
+  const makeRoundCard = (title, picks, pickLabel, recs) => `
+    <div class="round-card">
+      <h3>${title}</h3>
+      <div class="round-picks">${picks}</div>
+      <ul class="rec-list">${recs.slice(0,4).map((r,i)=>`
+        <li>
+          <span class="rec-num">${i+1}</span>
+          <div class="rec-body">
+            <strong>${r.name}</strong>
+            <span>${r.note}</span>
+          </div>
+        </li>`).join('')}
+      </ul>
+    </div>`;
+
+  document.getElementById('round-grid-dynamic').innerHTML =
+    makeRoundCard('Round 2', `Your pick: #${s.r2Pick} overall · players avg rank ≥ ${s.r2Pick - 1} still available`, 'r2', s.r2) +
+    makeRoundCard('Round 3', `Your pick: #${s.r3Pick} overall · players avg rank ≥ ${s.r3Pick - 1} still available`, 'r3', s.r3) +
+    makeRoundCard('Rounds 4–5', `Your picks: #${s.r4Pick} / #${snakePickNum(5,10)} · stack mode, lock contender depth`, 'r4', s.r4);
+
+  // Gems
+  document.getElementById('gem-list-dynamic').innerHTML = s.gems.map(g => `
+    <div class="gem-group">
+      <strong>${g.team} — ${TEAMS[g.team]?.name||g.team}</strong>
+      <span>${g.names}</span>
+    </div>`).join('');
+}
+
+// ── Render big board ──
+function renderBoard() {
+  const strategy = myPick ? getStrategy(myPick) : null;
+  let list = PLAYERS.slice();
+  if (currentPos  !== 'ALL') list = list.filter(p => p.pos === currentPos);
+  if (currentTier !== 'ALL') list = list.filter(p => p.tier === parseInt(currentTier));
+  if (currentSearch) {
+    const q = currentSearch.toLowerCase();
+    list = list.filter(p => p.name.toLowerCase().includes(q) || p.team.toLowerCase().includes(q));
+  }
+  const k = currentSort.key;
+  const dir = currentSort.dir === 'asc' ? 1 : -1;
+  const num = v => { if (v===null||v===undefined||v==='') return Infinity; if (typeof v==='string'){const m=v.match(/^(\d+)/);return m?parseInt(m[1]):Infinity;} return v; };
+  list.sort((a,b)=>{
+    let av=a[k], bv=b[k];
+    if(['nhl','df','rw'].includes(k)){av=num(av);bv=num(bv);}
+    if(typeof av==='string') return av.localeCompare(bv)*dir;
+    return (av-bv)*dir;
+  });
+
+  const body = document.getElementById('board-body');
+  body.innerHTML = list.map(p=>{
+    const tc = TC[p.team]||'#666';
+    const rankCls = p.overall<=5?'top5':(p.overall<=20?'top20':'');
+    const drafted = DRAFTED.has(p.name)?'drafted':'';
+    const rowCls  = drafted || getRowClass(p.name, strategy);
+    return `<tr class="${rowCls}" data-name="${p.name}">
+      <td class="rank-cell ${rankCls}">${p.overall}</td>
+      <td class="name-cell">${p.name}</td>
+      <td><span class="pos-pill pos-${p.pos}">${p.pos}</span></td>
+      <td><span class="team-cell"><span class="team-dot" style="background:${tc}"></span>${p.team}</span></td>
+      <td class="rank-src hide-mobile ${p.nhl==null?'dash':''}">${p.nhl??'—'}</td>
+      <td class="rank-src hide-mobile ${p.df==null?'dash':''}">${p.df??'—'}</td>
+      <td class="rank-src hide-mobile ${p.rw==null?'dash':''}">${p.rw??'—'}</td>
+      <td class="avg-cell">${p.avg}</td>
+      <td class="hide-mobile"><span class="tier-badge tier-${p.tier}">T${p.tier}</span></td>
+      <td class="path-cell hide-mobile">${p.path}</td>
+      <td><button class="draft-btn" data-name="${p.name}">${DRAFTED.has(p.name)?'✓':''}</button></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('count').textContent = list.length + ' players';
+
+  body.querySelectorAll('.draft-btn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      const n=btn.dataset.name;
+      if(DRAFTED.has(n)) DRAFTED.delete(n); else DRAFTED.add(n);
+      sessionStorage.setItem('drafted',JSON.stringify([...DRAFTED]));
+      renderBoard();
+    });
+  });
+}
+
+// ── Render positions ──
+function renderPositions() {
+  const strategy = myPick ? getStrategy(myPick) : null;
+  const POS=[{code:'C',label:'Centers'},{code:'LW',label:'Left Wings'},{code:'RW',label:'Right Wings'},{code:'D',label:'Defensemen'},{code:'G',label:'Goalies'}];
+  document.getElementById('pos-grid').innerHTML = POS.map(p=>{
+    const list = PLAYERS.filter(x=>x.pos===p.code).slice(0,20);
+    const rows = list.map((pl,i)=>{
+      const isMine = pl.name===myPick;
+      const isRec  = strategy && (strategy.r2.some(x=>x.name===pl.name)||strategy.r3.some(x=>x.name===pl.name));
+      const cls    = isMine?'pos-mypick':(isRec?'pos-rec':'');
+      const tag    = isMine?' ←PICK':(isRec?' ←REC':'');
+      return `<tr class="${cls}">
+        <td class="mini-rank ${i<3?'top3':''}">${i+1}</td>
+        <td><span class="name-cell">${pl.name}</span></td>
+        <td class="mini-team">${pl.team}</td>
+        <td class="mini-avg">${pl.avg}</td>
+        <td class="mini-tag">${tag}</td>
+      </tr>`;
+    }).join('');
+    return `<div class="pos-card">
+      <div class="pos-card-header"><h3>${p.label}</h3><span class="count">TOP 20</span></div>
+      <table class="mini-table"><tbody>${rows}</tbody></table>
+    </div>`;
+  }).join('');
+}
+
+// ── Render teams ──
+function renderTeams() {
+  const strategy = myPick ? getStrategy(myPick) : null;
+  const allRecs = strategy ? [...strategy.r2,...strategy.r3,...strategy.r4].map(x=>x.name) : [];
+  const ordered=['COL','DAL','CAR','TBL','VGK','MIN','BUF','EDM','OTT','MTL','UTA','PIT','PHI','BOS','ANA','LAK'];
+  document.getElementById('team-grid').innerHTML = ordered.map(t=>{
+    const info=TEAMS[t], color=TC[t]||'#666';
+    const roster=PLAYERS.filter(p=>p.team===t).slice(0,8);
+    const rows=roster.map(p=>{
+      const isMine = p.name===myPick;
+      const isRec  = allRecs.includes(p.name);
+      const tag    = isMine?' ←YOUR PICK':(isRec?' ←REC':'');
+      return `<div class="team-player">
+        <div class="tp-left">
+          <span class="tp-rank">#${p.overall}</span>
+          <span class="tp-name">${p.name}</span>
+          <span class="pos-pill pos-${p.pos}">${p.pos}</span>
+          ${tag?`<span class="tp-tag">${tag}</span>`:''}
+        </div>
+        <span class="mini-avg">${p.avg}</span>
+      </div>`;
+    }).join('');
+    return `<div class="team-card" style="--team-color:${color}">
+      <div class="team-card-header">
+        <div class="team-name">${info.name}</div>
+        <div class="team-meta"><span class="team-code">${t}</span><span class="tier-badge tier-${info.tier}">T${info.tier} · ${info.path}</span></div>
+        <div class="team-note">${info.note}</div>
+      </div>
+      <div class="team-roster">${rows}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── Full re-render ──
+function renderAll() {
+  renderStrategy();
+  renderBoard();
+  renderPositions();
+  renderTeams();
+}
+
+// ── Pick input autocomplete ──
+const pickInput = document.getElementById('pick-input');
+const dropdown  = document.getElementById('pick-dropdown');
+let focusedIdx  = -1;
+
+pickInput.addEventListener('input', () => {
+  const q = pickInput.value.trim().toLowerCase();
+  if (!q) { dropdown.classList.remove('show'); return; }
+  const matches = PLAYERS.filter(p => p.name.toLowerCase().includes(q)).slice(0,10);
+  if (!matches.length) { dropdown.classList.remove('show'); return; }
+  focusedIdx = -1;
+  dropdown.innerHTML = matches.map((p,i)=>`
+    <div class="pick-opt" data-name="${p.name}" data-idx="${i}">
+      <span class="po-rank">${p.overall}</span>
+      <div>
+        <div class="po-name">${p.name}</div>
+        <div class="po-meta">${p.pos} · ${p.team} · Avg ${p.avg} · ${p.path}</div>
+      </div>
+    </div>`).join('');
+  dropdown.classList.add('show');
+  dropdown.querySelectorAll('.pick-opt').forEach(opt=>{
+    opt.addEventListener('click', ()=>setPick(opt.dataset.name));
+  });
+});
+
+pickInput.addEventListener('keydown', e=>{
+  const opts = dropdown.querySelectorAll('.pick-opt');
+  if (!opts.length) return;
+  if (e.key==='ArrowDown'){e.preventDefault();focusedIdx=Math.min(focusedIdx+1,opts.length-1);updateFocus(opts);}
+  else if(e.key==='ArrowUp'){e.preventDefault();focusedIdx=Math.max(focusedIdx-1,0);updateFocus(opts);}
+  else if(e.key==='Enter'&&focusedIdx>=0){e.preventDefault();setPick(opts[focusedIdx].dataset.name);}
+  else if(e.key==='Escape'){dropdown.classList.remove('show');}
+});
+function updateFocus(opts){
+  opts.forEach((o,i)=>{o.classList.toggle('focused',i===focusedIdx);});
+  if(focusedIdx>=0) opts[focusedIdx].scrollIntoView({block:'nearest'});
+}
+document.addEventListener('click', e=>{
+  if(!pickInput.contains(e.target)&&!dropdown.contains(e.target)) dropdown.classList.remove('show');
+});
+
+function setPick(name) {
+  myPick = name;
+  sessionStorage.setItem('myPick', name);
+  dropdown.classList.remove('show');
+  pickInput.value = '';
+  showMyPickDisplay();
+  renderAll();
+}
+
+function showMyPickDisplay() {
+  const p = PLAYERS.find(x=>x.name===myPick);
+  if (!p) return;
+  document.getElementById('my-pick-display').style.display='flex';
+  document.getElementById('mpd-name').textContent = p.name;
+  document.getElementById('mpd-meta').textContent = `${p.pos} · ${p.team} · Avg Rank ${p.avg}`;
+  pickInput.parentElement.style.display = 'none';
+  document.querySelector('.pick-label-txt').style.display = 'none';
+}
+
+document.getElementById('clear-pick').addEventListener('click', ()=>{
+  myPick=null;
+  sessionStorage.removeItem('myPick');
+  document.getElementById('my-pick-display').style.display='none';
+  pickInput.parentElement.style.display='block';
+  document.querySelector('.pick-label-txt').style.display='block';
+  renderAll();
+});
+
+// ── Nav ──
+document.querySelectorAll('.nav-tabs button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.panel).classList.add('active');
+  });
+});
+
+// ── Board sorting ──
+document.querySelectorAll('th[data-sort]').forEach(th=>{
+  th.addEventListener('click',()=>{
+    const k=th.dataset.sort;
+    if(currentSort.key===k) currentSort.dir=currentSort.dir==='asc'?'desc':'asc';
+    else{currentSort.key=k;currentSort.dir='asc';}
+    document.querySelectorAll('th').forEach(t=>{t.classList.remove('sorted');const a=t.querySelector('.sort-arrow');if(a)a.remove();});
+    th.classList.add('sorted');
+    const arrow=document.createElement('span');arrow.className='sort-arrow';
+    arrow.textContent=currentSort.dir==='asc'?'▼':'▲';th.appendChild(arrow);
+    renderBoard();
+  });
+});
+
+// ── Board filters ──
+document.getElementById('search').addEventListener('input',e=>{currentSearch=e.target.value;renderBoard();});
+document.querySelectorAll('#pos-filter button').forEach(btn=>{
+  btn.addEventListener('click',()=>{document.querySelectorAll('#pos-filter button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentPos=btn.dataset.pos;renderBoard();});
+});
+document.querySelectorAll('#tier-filter button').forEach(btn=>{
+  btn.addEventListener('click',()=>{document.querySelectorAll('#tier-filter button').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentTier=btn.dataset.tier;renderBoard();});
+});
+
+// ── Init ──
+if (myPick) showMyPickDisplay();
+renderAll();
+</script>
+</body>
+</html>
